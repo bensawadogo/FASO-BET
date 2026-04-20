@@ -5,6 +5,24 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Count, Q
+from django.conf import settings
+import os
+
+# Chargement du fichier .env
+env_path = os.path.join(settings.BASE_DIR, '.env')
+if os.path.exists(env_path):
+    with open(env_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            if '=' in line and not line.startswith('#'):
+                k, v = line.strip().split('=', 1)
+                os.environ[k] = v
+
+# Chargement du SKILL en mémoire (chargé une seule fois)
+skill_path = os.path.join(settings.BASE_DIR, 'predictions', 'ia-paris-sportif-SKILL.md')
+SKILL_CONTENT = ""
+if os.path.exists(skill_path):
+    with open(skill_path, 'r', encoding='utf-8') as f:
+        SKILL_CONTENT = f.read()
 
 from .models import Sport, Match, Prediction, UserProfile, Team
 from .forms import PredictionForm, RegisterForm
@@ -32,6 +50,7 @@ def home(request):
         'total_predictions': total_predictions,
         'total_matches': total_matches,
         'total_users': total_users,
+        'api_football_key': os.environ.get('API_FOOTBALL_KEY', ''),
     }
     return render(request, 'predictions/home.html', context)
 
@@ -100,6 +119,9 @@ def match_detail(request, pk):
         'user_prediction': user_prediction,
         'prediction_form': prediction_form,
         'predictions_stats': predictions_stats,
+        'skill_content': SKILL_CONTENT,
+        'gemini_api_key': os.environ.get('GEMINI_API_KEY', ''),
+        'groq_api_key': os.environ.get('GROQ_API_KEY', ''),
     }
     return render(request, 'predictions/match_detail.html', context)
 
@@ -172,3 +194,23 @@ def logout_view(request):
     logout(request)
     messages.info(request, 'À bientôt ! 👋')
     return redirect('home')
+
+
+def live_match_detail(request, fixture_id):
+    """Page d'analyse d'un match en direct de l'API."""
+    context = {
+        'fixture_id': fixture_id,
+        'skill_content': SKILL_CONTENT,
+        'gemini_api_key': os.environ.get('GEMINI_API_KEY', ''),
+        'groq_api_key': os.environ.get('GROQ_API_KEY', ''),
+        'api_football_key': os.environ.get('API_FOOTBALL_KEY', ''),
+    }
+    return render(request, 'predictions/live_match_detail.html', context)
+
+
+def standings(request):
+    """Classements en direct depuis l'API Football."""
+    context = {
+        'api_football_key': os.environ.get('API_FOOTBALL_KEY', ''),
+    }
+    return render(request, 'predictions/standings.html', context)

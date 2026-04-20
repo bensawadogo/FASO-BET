@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <meta name="description" content="FASO BET — Prédictions sportives IA en temps réel. Foot, Basket, Tennis, MMA.">
-  <title>{% block title %}FASO BET{% endblock %}</title>
+  <meta name="description" content="FASO BET by BEN-SAWADOGO — Prédictions sportives IA en temps réel. Foot, Basket, Tennis, MMA.">
+  <title>{% block title %}FASO BET by BEN-SAWADOGO{% endblock %}</title>
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@200;300;400;500;600;700&display=swap" rel="stylesheet"/>
@@ -129,6 +129,22 @@
     .fade-up-d1 { animation-delay: 0.1s; }
     .fade-up-d2 { animation-delay: 0.2s; }
     .fade-up-d3 { animation-delay: 0.3s; }
+    .cyber-author {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.4em;
+      letter-spacing: 0.25em;
+      color: #00f4fe;
+      text-transform: uppercase;
+      text-shadow: 0 0 15px rgba(0, 244, 254, 0.8), 0 0 30px rgba(0, 244, 254, 0.4);
+      vertical-align: middle;
+      margin-left: 8px;
+      display: inline-block;
+      animation: pulse-glow 3s infinite alternate;
+    }
+    @keyframes pulse-glow {
+      0% { text-shadow: 0 0 10px rgba(0, 244, 254, 0.5); opacity: 0.8; }
+      100% { text-shadow: 0 0 20px rgba(0, 244, 254, 1), 0 0 40px rgba(0, 244, 254, 0.6); opacity: 1; }
+    }
   </style>
 </head>
 
@@ -143,14 +159,15 @@
   <nav class="fixed top-3 left-0 right-0 z-50 flex justify-center px-4">
     <div class="mx-4 mt-4 rounded-2xl bg-violet-950/40 backdrop-blur-2xl text-violet-400 font-['Space_Grotesk'] tracking-tighter font-bold shadow-[0_0_40px_rgba(94,0,193,0.1)] flex justify-between items-center px-6 py-4 w-full max-w-7xl">
       <div class="flex items-center gap-2">
-        <a href="{% url 'home' %}" class="text-2xl font-black italic tracking-tighter text-white bg-clip-text text-transparent bg-gradient-to-r from-white via-violet-200 to-cyan-200">
-          FASO BET ✦
+        <a href="{% url 'home' %}" class="text-2xl font-black italic tracking-tighter text-white bg-clip-text text-transparent bg-gradient-to-r from-white via-violet-200 to-cyan-200 flex items-center">
+          FASO BET <span class="cyber-author">by BEN-SAWADOGO</span> <span class="ml-2">✦</span>
         </a>
       </div>
       <div class="hidden md:flex items-center space-x-8">
         <a class="text-violet-300/60 hover:text-white hover:bg-white/10 px-3 py-1 rounded-lg transition-all duration-300" href="{% url 'home' %}">Accueil</a>
         <a class="text-violet-300/60 hover:text-white hover:bg-white/10 px-3 py-1 rounded-lg transition-all duration-300" href="{% url 'matches' %}">Matchs</a>
-        <a class="text-violet-300/60 hover:text-white hover:bg-white/10 px-3 py-1 rounded-lg transition-all duration-300" href="{% url 'leaderboard' %}">Classement</a>
+        <a class="text-violet-300/60 hover:text-white hover:bg-white/10 px-3 py-1 rounded-lg transition-all duration-300" href="{% url 'standings' %}">Ligue 1 & Co</a>
+        <a class="text-violet-300/60 hover:text-white hover:bg-white/10 px-3 py-1 rounded-lg transition-all duration-300" href="{% url 'leaderboard' %}">Membres</a>
         {% if user.is_authenticated %}
         <a class="text-violet-300/60 hover:text-white hover:bg-white/10 px-3 py-1 rounded-lg transition-all duration-300" href="{% url 'my_predictions' %}">Mes Pronos</a>
         {% endif %}
@@ -227,7 +244,7 @@
 
   <!-- ═══ Footer ═══ -->
   <footer class="relative z-10 border-t border-white/5 py-8 text-center text-on-surface-variant/40 text-xs font-label mt-20">
-    <p>⚡ FASO BET — L'arène des pronostiqueurs d'élite</p>
+    <p>⚡ FASO BET <span class="text-cyan-400 font-bold tracking-widest text-[10px]">by BEN-SAWADOGO</span> — L'arène des pronostiqueurs d'élite</p>
   </footer>
 
   <script>

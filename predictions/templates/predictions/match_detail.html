@@ -1,5 +1,5 @@
 {% extends "predictions/base.html" %}
-{% block title %}{{ match.team_a }} vs {{ match.team_b }} — FASO BET{% endblock %}
+{% block title %}{{ match.team_a }} vs {{ match.team_b }} — FASO BET by BEN-SAWADOGO{% endblock %}
 
 {% block content %}
 <div class="pt-32 px-6 max-w-2xl mx-auto pb-32">
@@ -62,6 +62,180 @@
     </div>
     {% endif %}
   </div>
+
+  <!-- DUAL AI Analysis Section -->
+  <div class="glass-card rounded-xl p-8 border border-white/10 mb-8 fade-up shadow-lg relative overflow-hidden">
+    <div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 blur-[40px]"></div>
+    <div class="relative z-10">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-headline font-bold text-white flex items-center gap-2">
+          <span class="text-2xl">⚡</span> Analyse Dual-Engine (Gemini + Groq)
+        </h2>
+      </div>
+      
+      <div id="ai-setup">
+        <p class="text-sm text-on-surface-variant/80 mb-4">Analyse en temps réel via 2 modèles IA distincts, basée sur le SKILL "IA Paris Sportif".</p>
+        <button onclick="analyzeMatchDual()" id="btn-analyze" class="w-full px-6 py-3 bg-white/10 text-white font-bold rounded-lg hover:bg-white/20 transition-all border border-white/20 flex justify-center items-center gap-2">
+          <span class="material-symbols-outlined text-sm">rocket_launch</span>
+          <span>Lancer l'analyse croisée</span>
+        </button>
+      </div>
+
+      <div id="ai-loading" class="hidden text-center py-8">
+        <div class="flex justify-center gap-4 mb-4">
+          <span class="material-symbols-outlined animate-spin text-4xl text-blue-400">autorenew</span>
+        </div>
+        <p id="loader-text" class="text-sm text-on-surface-variant animate-pulse font-mono">Démarrage des moteurs IA...</p>
+      </div>
+
+      <div id="ai-result" class="hidden mt-4 pt-6 border-t border-white/5">
+        <!-- RÉSULTAT CONSENSUS -->
+        <div class="bg-black/40 border border-yellow-500/30 rounded-lg p-4 mb-6 text-center">
+          <h3 class="text-xs font-label uppercase tracking-widest text-yellow-400 mb-2">🏆 SCORE CONSENSUS</h3>
+          <p id="consensus-text" class="text-lg font-headline font-bold text-white">Analyse en cours...</p>
+        </div>
+
+        <!-- GRILLE DUAL -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- GEMINI -->
+          <div class="bg-blue-900/10 border border-blue-500/20 rounded-lg p-4">
+            <h3 class="flex items-center gap-2 text-blue-400 font-bold mb-3 border-b border-blue-500/20 pb-2">
+              <span>🤖</span> GEMINI (Google AI)
+            </h3>
+            <div id="gemini-content" class="text-xs text-on-surface-variant/90 leading-relaxed font-mono whitespace-pre-wrap h-64 overflow-y-auto pr-2 custom-scrollbar"></div>
+          </div>
+          <!-- GROQ -->
+          <div class="bg-orange-900/10 border border-orange-500/20 rounded-lg p-4">
+            <h3 class="flex items-center gap-2 text-orange-400 font-bold mb-3 border-b border-orange-500/20 pb-2">
+              <span>⚡</span> GROQ (LLaMA 70B)
+            </h3>
+            <div id="groq-content" class="text-xs text-on-surface-variant/90 leading-relaxed font-mono whitespace-pre-wrap h-64 overflow-y-auto pr-2 custom-scrollbar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  </style>
+
+  <script>
+    const GEMINI_API_KEY = "{{ gemini_api_key|escapejs }}";
+    const GROQ_API_KEY = "{{ groq_api_key|escapejs }}";
+    const SKILL_CONTENT = "{{ skill_content|escapejs }}";
+    const MATCH_DATA = "Match à analyser : {{ match.team_a.name|escapejs }} vs {{ match.team_b.name|escapejs }} | Sport: {{ match.sport.name|escapejs }} | Ligue: {{ match.league|default:'Non spécifié'|escapejs }}";
+
+    const callGemini = async (match, skillContent) => {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: skillContent }] },
+            contents: [{ parts: [{ text: match }] }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 2000 }
+          })
+        }
+      );
+      if (!response.ok) throw new Error("Erreur HTTP Gemini");
+      const data = await response.json();
+      return data.candidates[0].content.parts[0].text;
+    };
+
+    const callGroq = async (match, skillContent) => {
+      const response = await fetch(
+        "https://api.groq.com/openai/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${GROQ_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.3,
+            max_tokens: 2000,
+            messages: [
+              { role: "system", content: skillContent },
+              { role: "user", content: match }
+            ]
+          })
+        }
+      );
+      if (!response.ok) throw new Error("Erreur HTTP Groq");
+      const data = await response.json();
+      return data.choices[0].message.content;
+    };
+
+    const callDualAI = async (match, skillContent) => {
+      const [geminiResult, groqResult] = await Promise.allSettled([
+        callGemini(match, skillContent),
+        callGroq(match, skillContent)
+      ]);
+      return {
+        gemini: geminiResult.status === "fulfilled" ? geminiResult.value : "❌ Gemini indisponible",
+        groq: groqResult.status === "fulfilled" ? groqResult.value : "❌ Groq indisponible"
+      };
+    };
+
+    function determineConsensus(geminiTxt, groqTxt) {
+      const g = geminiTxt.toUpperCase();
+      const q = groqTxt.toUpperCase();
+      
+      const gAvoid = g.includes("❌ ÉVITER") || g.includes("ÉVITER");
+      const qAvoid = q.includes("❌ ÉVITER") || q.includes("ÉVITER");
+      if (gAvoid && qAvoid) return "❌ NE PAS PARIER (Les deux déconseillent)";
+
+      const gValue = g.includes("✅ VALUE BET");
+      const qValue = q.includes("✅ VALUE BET");
+      if (gValue && qValue) return "✅✅ SIGNAL TRÈS FORT (Accord Total)";
+      if (gValue || qValue) return "✅ SIGNAL FORT (Accord Partiel)";
+      
+      return "⚠️ PRUDENCE (Désaccord ou Neutre)";
+    }
+
+    async function analyzeMatchDual() {
+      if (!GEMINI_API_KEY || !GROQ_API_KEY) {
+        alert("Attention : Une ou plusieurs clés API (Gemini/Groq) ne sont pas configurées dans le fichier .env ! L'analyse risque d'échouer.");
+      }
+      
+      document.getElementById('ai-setup').style.display = 'none';
+      document.getElementById('ai-loading').style.display = 'block';
+      const loaderTxt = document.getElementById('loader-text');
+      
+      let step = 0;
+      const loaderInterval = setInterval(() => {
+        step++;
+        if (step % 3 === 0) loaderTxt.textContent = "🤖 Gemini analyse le match...";
+        else if (step % 3 === 1) loaderTxt.textContent = "⚡ Groq analyse le match...";
+        else loaderTxt.textContent = "🏆 Calcul du consensus...";
+      }, 1500);
+
+      try {
+        const results = await callDualAI(MATCH_DATA, SKILL_CONTENT);
+        clearInterval(loaderInterval);
+        
+        document.getElementById('ai-loading').style.display = 'none';
+        document.getElementById('ai-result').style.display = 'block';
+        
+        document.getElementById('gemini-content').textContent = results.gemini;
+        document.getElementById('groq-content').textContent = results.groq;
+        
+        const consensus = determineConsensus(results.gemini, results.groq);
+        document.getElementById('consensus-text').textContent = consensus;
+        
+      } catch (err) {
+        clearInterval(loaderInterval);
+        document.getElementById('ai-loading').style.display = 'none';
+        document.getElementById('ai-setup').style.display = 'block';
+        alert("Erreur générale de l'orchestrateur IA.");
+      }
+    }
+  </script>
 
   <!-- Prediction Form / Status -->
   <div class="fade-up fade-up-d1">
