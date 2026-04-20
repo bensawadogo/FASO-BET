@@ -1,0 +1,48 @@
+{% extends "predictions/base.html" %}
+{% block title %}Inscription — FASO BET{% endblock %}
+
+{% block content %}
+<div class="pt-32 px-6 max-w-md mx-auto pb-32">
+  <section class="fade-up">
+    <h1 class="text-4xl font-headline font-bold tracking-tighter signature-gradient-text text-center mb-10">Créer un compte</h1>
+
+    <div class="glass-card rounded-xl p-8 border border-white/5">
+      <form method="post">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+        <div class="mb-4">
+          {% for e in form.non_field_errors %}
+          <div class="text-red-400 text-xs px-3 py-2 bg-red-500/10 rounded-lg mb-1">{{ e }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% for field in form %}
+        <div class="mb-5">
+          <label for="{{ field.id_for_label }}" class="block text-sm font-label font-bold text-on-surface-variant/60 mb-2 uppercase tracking-wider">{{ field.label }}</label>
+          <input type="{% if 'password' in field.name %}password{% elif 'email' in field.name %}email{% else %}text{% endif %}"
+                 name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+                 placeholder="{{ field.label }}" {% if field.value %}value="{{ field.value }}"{% endif %}
+                 {% if forloop.first %}autofocus{% endif %}
+                 class="w-full px-4 py-3 bg-white/[0.04] border border-white/10 rounded-lg text-white font-body focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none transition-all placeholder:text-on-surface-variant/30">
+          {% if field.help_text %}
+          <div class="text-[10px] text-on-surface-variant/40 mt-1.5 leading-relaxed">{{ field.help_text|safe }}</div>
+          {% endif %}
+          {% if field.errors %}
+          <div class="mt-1.5">{% for e in field.errors %}<div class="text-red-400 text-xs px-3 py-1 bg-red-500/10 rounded mt-1">{{ e }}</div>{% endfor %}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="w-full px-8 py-4 bg-white text-on-primary-fixed font-bold rounded-md hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_30px_rgba(255,255,255,0.15)] mt-2">
+          Rejoindre l'arène 🚀
+        </button>
+      </form>
+
+      <p class="text-center text-sm text-on-surface-variant/40 mt-6">
+        Déjà un compte ? <a href="{% url 'login' %}" class="text-primary hover:text-white transition-colors">Se connecter</a>
+      </p>
+    </div>
+  </section>
+</div>
+{% endblock %}

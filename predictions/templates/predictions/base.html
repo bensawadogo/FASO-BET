@@ -1,0 +1,242 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="dark" lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <meta name="description" content="FASO BET — Prédictions sportives IA en temps réel. Foot, Basket, Tennis, MMA.">
+  <title>{% block title %}FASO BET{% endblock %}</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@200;300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "tertiary-container": "#c9a900",
+            "primary-container": "#7f00ff",
+            "on-error": "#690005",
+            "on-tertiary": "#3a3000",
+            "error-container": "#93000a",
+            "on-primary-fixed-variant": "#5e00c1",
+            "inverse-on-surface": "#332c47",
+            "on-primary": "#42008a",
+            "surface-container": "#221c35",
+            "primary": "#d5baff",
+            "tertiary-fixed": "#ffe16d",
+            "tertiary-fixed-dim": "#e9c400",
+            "surface-container-high": "#2c2640",
+            "error": "#ffb4ab",
+            "on-primary-fixed": "#270057",
+            "outline-variant": "#4b4356",
+            "on-tertiary-fixed": "#221b00",
+            "on-primary-container": "#e6d4ff",
+            "on-tertiary-fixed-variant": "#544600",
+            "surface-container-highest": "#37314b",
+            "on-secondary-fixed": "#002021",
+            "secondary-fixed-dim": "#00dce5",
+            "surface-dim": "#150f28",
+            "on-background": "#e8ddff",
+            "on-secondary-container": "#006c71",
+            "surface-container-low": "#1e1831",
+            "on-secondary-fixed-variant": "#004f53",
+            "surface-container-lowest": "#100a23",
+            "background": "#150f28",
+            "surface": "#150f28",
+            "on-surface": "#e8ddff",
+            "on-tertiary-container": "#4c3e00",
+            "primary-fixed-dim": "#d5baff",
+            "surface-bright": "#3c3550",
+            "on-secondary": "#003739",
+            "inverse-surface": "#e8ddff",
+            "on-error-container": "#ffdad6",
+            "secondary-container": "#00f4fe",
+            "outline": "#978da3",
+            "on-surface-variant": "#cdc2da",
+            "tertiary": "#e9c400",
+            "surface-variant": "#37314b",
+            "surface-tint": "#d5baff",
+            "secondary-fixed": "#63f7ff",
+            "primary-fixed": "#ecdcff",
+            "secondary": "#e6feff",
+            "inverse-primary": "#7d00fa"
+          },
+          borderRadius: {
+            DEFAULT: "1rem",
+            lg: "2rem",
+            xl: "3rem",
+            full: "9999px"
+          },
+          fontFamily: {
+            headline: ["Space Grotesk"],
+            body: ["Manrope"],
+            label: ["Manrope"]
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #030014;
+      color: #e8ddff;
+      font-family: 'Manrope', sans-serif;
+      overflow-x: hidden;
+      min-height: max(884px, 100dvh);
+    }
+    .cosmic-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      z-index: 0;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .orb-purple { width: 600px; height: 600px; background: #5e00c1; top: -10%; left: -10%; }
+    .orb-cyan { width: 500px; height: 500px; background: #00f4fe; top: 10%; right: -5%; }
+    .orb-gold { width: 700px; height: 400px; background: #e9c400; bottom: -10%; left: 20%; }
+    .glass-card {
+      background: rgba(30, 24, 49, 0.4);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+    .signature-gradient-text {
+      background: linear-gradient(to right, #ffffff, #d5baff, #00f4fe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .ticker-scroll {
+      display: flex;
+      white-space: nowrap;
+      animation: scroll 30s linear infinite;
+    }
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.6s ease-out both; }
+    .fade-up-d1 { animation-delay: 0.1s; }
+    .fade-up-d2 { animation-delay: 0.2s; }
+    .fade-up-d3 { animation-delay: 0.3s; }
+  </style>
+</head>
+
+<body class="selection:bg-primary/30">
+
+  <!-- Cosmic Orbs -->
+  <div class="cosmic-orb orb-purple"></div>
+  <div class="cosmic-orb orb-cyan"></div>
+  <div class="cosmic-orb orb-gold"></div>
+
+  <!-- ═══ Navigation ═══ -->
+  <nav class="fixed top-3 left-0 right-0 z-50 flex justify-center px-4">
+    <div class="mx-4 mt-4 rounded-2xl bg-violet-950/40 backdrop-blur-2xl text-violet-400 font-['Space_Grotesk'] tracking-tighter font-bold shadow-[0_0_40px_rgba(94,0,193,0.1)] flex justify-between items-center px-6 py-4 w-full max-w-7xl">
+      <div class="flex items-center gap-2">
+        <a href="{% url 'home' %}" class="text-2xl font-black italic tracking-tighter text-white bg-clip-text text-transparent bg-gradient-to-r from-white via-violet-200 to-cyan-200">
+          FASO BET ✦
+        </a>
+      </div>
+      <div class="hidden md:flex items-center space-x-8">
+        <a class="text-violet-300/60 hover:text-white hover:bg-white/10 px-3 py-1 rounded-lg transition-all duration-300" href="{% url 'home' %}">Accueil</a>
+        <a class="text-violet-300/60 hover:text-white hover:bg-white/10 px-3 py-1 rounded-lg transition-all duration-300" href="{% url 'matches' %}">Matchs</a>
+        <a class="text-violet-300/60 hover:text-white hover:bg-white/10 px-3 py-1 rounded-lg transition-all duration-300" href="{% url 'leaderboard' %}">Classement</a>
+        {% if user.is_authenticated %}
+        <a class="text-violet-300/60 hover:text-white hover:bg-white/10 px-3 py-1 rounded-lg transition-all duration-300" href="{% url 'my_predictions' %}">Mes Pronos</a>
+        {% endif %}
+      </div>
+      <div class="flex items-center gap-3">
+        {% if user.is_authenticated %}
+        <span class="hidden md:inline text-xs text-violet-300/60">{{ user.username }}</span>
+        <a href="{% url 'logout' %}" class="text-violet-300/60 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-white/10 transition-all">Déco</a>
+        {% else %}
+        <a href="{% url 'login' %}" class="text-violet-300/60 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-white/10 transition-all">Connexion</a>
+        <a href="{% url 'register' %}" class="px-4 py-2 bg-white/10 text-white text-sm rounded-lg hover:bg-white/20 transition-all border border-white/10">Inscription</a>
+        {% endif %}
+        <button class="material-symbols-outlined text-violet-400 p-2 hover:bg-white/10 rounded-full transition-all md:hidden" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">menu</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden fixed top-24 left-4 right-4 z-50 bg-violet-950/80 backdrop-blur-2xl rounded-2xl p-6 border border-white/10 md:hidden">
+    <div class="flex flex-col space-y-4">
+      <a class="text-violet-200 hover:text-white transition-all py-2" href="{% url 'home' %}">Accueil</a>
+      <a class="text-violet-200 hover:text-white transition-all py-2" href="{% url 'matches' %}">Matchs</a>
+      <a class="text-violet-200 hover:text-white transition-all py-2" href="{% url 'leaderboard' %}">Classement</a>
+      {% if user.is_authenticated %}
+      <a class="text-violet-200 hover:text-white transition-all py-2" href="{% url 'my_predictions' %}">Mes Pronos</a>
+      <a class="text-violet-200 hover:text-white transition-all py-2" href="{% url 'logout' %}">Déconnexion</a>
+      {% else %}
+      <a class="text-violet-200 hover:text-white transition-all py-2" href="{% url 'login' %}">Connexion</a>
+      <a class="text-violet-200 hover:text-white transition-all py-2" href="{% url 'register' %}">Inscription</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ═══ Messages ═══ -->
+  {% if messages %}
+  <div class="fixed top-28 right-6 z-[200] flex flex-col gap-2" id="messages">
+    {% for message in messages %}
+    <div class="glass-card px-5 py-3 rounded-xl border border-white/10 text-sm
+      {% if message.tags == 'success' %}border-l-4 border-l-green-500{% endif %}
+      {% if message.tags == 'error' %}border-l-4 border-l-red-500{% endif %}
+      {% if message.tags == 'info' %}border-l-4 border-l-cyan-400{% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ═══ Content ═══ -->
+  <main class="relative z-10">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ═══ Bottom Navigation (Mobile) ═══ -->
+  <div class="fixed bottom-8 left-1/2 -translate-x-1/2 w-max z-50 flex space-x-6 px-6 py-2 bg-[#37314b]/70 backdrop-blur-[20px] rounded-full border-t border-white/15 shadow-[0_20px_50px_rgba(94,0,193,0.2)] md:hidden">
+    <a class="flex items-center justify-center bg-violet-600/20 text-violet-300 rounded-full p-3 shadow-[0_0_20px_rgba(127,0,255,0.3)] active:scale-90 transition-transform" href="{% url 'home' %}">
+      <span class="material-symbols-outlined">home</span>
+    </a>
+    <a class="flex items-center justify-center text-violet-200/40 p-3 hover:text-white transition-colors duration-200 active:scale-90" href="{% url 'matches' %}">
+      <span class="material-symbols-outlined">query_stats</span>
+    </a>
+    <a class="flex items-center justify-center text-violet-200/40 p-3 hover:text-white transition-colors duration-200 active:scale-90" href="{% url 'leaderboard' %}">
+      <span class="material-symbols-outlined">emoji_events</span>
+    </a>
+    {% if user.is_authenticated %}
+    <a class="flex items-center justify-center text-violet-200/40 p-3 hover:text-white transition-colors duration-200 active:scale-90" href="{% url 'my_predictions' %}">
+      <span class="material-symbols-outlined">person</span>
+    </a>
+    {% else %}
+    <a class="flex items-center justify-center text-violet-200/40 p-3 hover:text-white transition-colors duration-200 active:scale-90" href="{% url 'login' %}">
+      <span class="material-symbols-outlined">person</span>
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- ═══ Footer ═══ -->
+  <footer class="relative z-10 border-t border-white/5 py-8 text-center text-on-surface-variant/40 text-xs font-label mt-20">
+    <p>⚡ FASO BET — L'arène des pronostiqueurs d'élite</p>
+  </footer>
+
+  <script>
+    // Auto-dismiss messages
+    setTimeout(() => {
+      const msgs = document.getElementById('messages');
+      if (msgs) msgs.style.opacity = '0';
+      setTimeout(() => { if (msgs) msgs.style.display = 'none'; }, 500);
+    }, 4000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+{% extends "predictions/base.html" %}
+{% block title %}Mes Prédictions — FASO BET{% endblock %}
+
+{% block content %}
+<div class="pt-32 px-6 max-w-4xl mx-auto pb-32">
+
+  <section class="text-center mb-12 fade-up">
+    <h1 class="text-5xl md:text-6xl font-headline font-bold tracking-tighter signature-gradient-text mb-4">Mes Prédictions</h1>
+  </section>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 fade-up fade-up-d1">
+    <div class="glass-card rounded-xl p-5 text-center border border-white/5">
+      <div class="text-2xl font-headline font-bold text-primary mb-1">{{ profile.points }}</div>
+      <div class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Points</div>
+    </div>
+    <div class="glass-card rounded-xl p-5 text-center border border-white/5">
+      <div class="text-2xl font-headline font-bold text-secondary-fixed-dim mb-1">{{ profile.total_predictions }}</div>
+      <div class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Total</div>
+    </div>
+    <div class="glass-card rounded-xl p-5 text-center border border-white/5">
+      <div class="text-2xl font-headline font-bold text-tertiary-fixed-dim mb-1">{{ profile.accuracy }}%</div>
+      <div class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Précision</div>
+    </div>
+    <div class="glass-card rounded-xl p-5 text-center border border-white/5">
+      <div class="text-2xl font-headline font-bold text-[#00ff88] mb-1">🔥 {{ profile.current_streak }}</div>
+      <div class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Série</div>
+    </div>
+  </div>
+
+  <!-- Predictions List -->
+  <div class="fade-up fade-up-d2">
+    {% if predictions %}
+    <div class="glass-card rounded-xl border border-white/5 divide-y divide-white/5">
+      {% for pred in predictions %}
+      <div class="flex items-center justify-between p-5 gap-4 flex-wrap hover:bg-white/[0.02] transition-colors">
+        <div class="flex-1 min-w-[200px]">
+          <div class="text-sm font-bold text-white">{{ pred.match.team_a }} vs {{ pred.match.team_b }}</div>
+          <div class="text-[10px] font-label text-on-surface-variant/60 mt-1">{{ pred.match.sport.icon }} {{ pred.match.sport.name }} · {{ pred.created_at|date:"d M Y H:i" }}</div>
+        </div>
+        <div class="text-center">
+          <div class="text-[10px] font-label text-on-surface-variant/40 uppercase tracking-wider">Choix</div>
+          <div class="text-sm font-bold text-white mt-0.5">
+            {% if pred.predicted_outcome == 'team_a' %}{{ pred.match.team_a.name }}
+            {% elif pred.predicted_outcome == 'draw' %}Nul
+            {% else %}{{ pred.match.team_b.name }}{% endif %}
+          </div>
+        </div>
+        <div class="text-center">
+          <div class="text-[10px] font-label text-on-surface-variant/40 uppercase tracking-wider">Conf.</div>
+          <div class="text-sm font-bold text-white mt-0.5">{{ pred.confidence }}%</div>
+        </div>
+        <div>
+          {% if pred.is_correct is True %}
+          <span class="px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-xs font-bold">✅</span>
+          {% elif pred.is_correct is False %}
+          <span class="px-3 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-bold">❌</span>
+          {% else %}
+          <span class="px-3 py-1 rounded-full bg-white/5 text-on-surface-variant/40 text-xs">⏳</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="glass-card rounded-xl p-12 text-center border border-white/5">
+      <div class="text-4xl mb-4">🔮</div>
+      <p class="text-on-surface-variant mb-4">Vous n'avez encore fait aucune prédiction.</p>
+      <a href="{% url 'matches' %}" class="px-8 py-3 bg-white text-on-primary-fixed font-bold rounded-md hover:scale-105 transition-all">Découvrir les matchs</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "predictions/base.html" %}
+{% block title %}Classement — FASO BET{% endblock %}
+
+{% block content %}
+<div class="pt-32 px-6 max-w-4xl mx-auto pb-32">
+
+  <section class="text-center mb-12 fade-up">
+    <h1 class="text-5xl md:text-6xl font-headline font-bold tracking-tighter signature-gradient-text mb-4">🏆 Classement</h1>
+    <p class="text-lg text-on-surface-variant font-light">Les meilleurs pronostiqueurs de l'arène.</p>
+  </section>
+
+  <div class="fade-up fade-up-d1">
+    {% if profiles %}
+    <div class="glass-card rounded-xl border border-white/5 overflow-hidden">
+      <!-- Table Header -->
+      <div class="hidden md:grid grid-cols-7 gap-4 px-6 py-3 text-[10px] font-label uppercase tracking-widest text-on-surface-variant/40 border-b border-white/5">
+        <div>#</div>
+        <div class="col-span-2">Joueur</div>
+        <div class="text-right">Points</div>
+        <div class="text-right">Pronos</div>
+        <div class="text-right">Précision</div>
+        <div class="text-right">Série</div>
+      </div>
+      <!-- Rows -->
+      {% for profile in profiles %}
+      <div class="grid grid-cols-3 md:grid-cols-7 gap-4 px-6 py-4 items-center hover:bg-white/[0.02] transition-colors border-b border-white/[0.03] last:border-0">
+        <div class="font-headline font-black
+          {% if forloop.counter == 1 %}text-yellow-400 text-lg{% elif forloop.counter == 2 %}text-gray-300{% elif forloop.counter == 3 %}text-amber-600{% else %}text-on-surface-variant/40{% endif %}">
+          {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}
+        </div>
+        <div class="col-span-2 font-bold text-white text-sm">{{ profile.avatar_emoji }} {{ profile.user.username }}</div>
+        <div class="text-right font-bold text-primary text-sm hidden md:block">{{ profile.points }}</div>
+        <div class="text-right text-on-surface-variant/60 text-sm hidden md:block">{{ profile.total_predictions }}</div>
+        <div class="text-right text-on-surface-variant/60 text-sm hidden md:block">{{ profile.accuracy }}%</div>
+        <div class="text-right text-sm hidden md:block">
+          <span class="text-on-surface-variant/40">🔥 {{ profile.current_streak }}</span>
+          <span class="text-on-surface-variant/20 text-xs ml-1">(best: {{ profile.best_streak }})</span>
+        </div>
+        <!-- Mobile: points -->
+        <div class="md:hidden text-right text-primary font-bold text-sm">{{ profile.points }} pts</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="glass-card rounded-xl p-12 text-center border border-white/5">
+      <div class="text-4xl mb-4">🌠</div>
+      <p class="text-on-surface-variant mb-4">Le classement est vide. Soyez le premier !</p>
+      <a href="{% url 'register' %}" class="px-8 py-3 bg-white text-on-primary-fixed font-bold rounded-md hover:scale-105 transition-all">Créer un compte</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

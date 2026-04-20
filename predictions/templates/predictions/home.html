@@ -1,0 +1,226 @@
+{% extends "predictions/base.html" %}
+{% block title %}FASO BET — Prédictions Sportives IA{% endblock %}
+
+{% block content %}
+
+<!-- ═══ Live Ticker ═══ -->
+{% if live_matches %}
+<div class="pt-28 w-full overflow-hidden">
+  <div class="bg-surface-container-lowest/40 backdrop-blur-md py-3 border-y border-white/5">
+    <div class="ticker-scroll">
+      <div class="flex items-center space-x-12 px-6">
+        {% for match in live_matches %}
+        <div class="flex items-center space-x-3">
+          <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          <span class="text-xs font-label uppercase tracking-widest text-on-surface-variant">
+            {{ match.team_a.name }} {{ match.score_a|default:"0" }} - {{ match.score_b|default:"0" }} {{ match.team_b.name }}
+          </span>
+          <span class="text-[10px] text-primary/60">LIVE</span>
+        </div>
+        {% endfor %}
+      </div>
+      <!-- Duplicate for seamless loop -->
+      <div class="flex items-center space-x-12 px-6">
+        {% for match in live_matches %}
+        <div class="flex items-center space-x-3">
+          <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          <span class="text-xs font-label uppercase tracking-widest text-on-surface-variant">
+            {{ match.team_a.name }} {{ match.score_a|default:"0" }} - {{ match.score_b|default:"0" }} {{ match.team_b.name }}
+          </span>
+          <span class="text-[10px] text-primary/60">LIVE</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="pt-28"></div>
+{% endif %}
+
+<!-- ═══ Hero Section ═══ -->
+<section class="relative px-6 pt-20 pb-24 max-w-7xl mx-auto text-center fade-up">
+  <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-primary-container/20 border border-primary/20 mb-8 backdrop-blur-xl">
+    <span class="material-symbols-outlined text-sm text-secondary-fixed" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+    <span class="text-[10px] font-label uppercase tracking-[0.2em] text-primary-fixed">Prédictions IA en temps réel</span>
+  </div>
+
+  <h1 class="text-6xl md:text-8xl font-headline font-bold tracking-tighter leading-[0.9] mb-8 signature-gradient-text">
+    Analyse.<br/>Prédit.
+  </h1>
+
+  <p class="text-xl md:text-2xl font-body font-light text-on-surface-variant max-w-2xl mx-auto mb-12">
+    Foot · Basket · Tennis · MMA.<br/>
+    <span class="text-primary-fixed">Combinés générés par IA avec un taux de réussite élevé.</span>
+  </p>
+
+  <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+    <a href="{% url 'matches' %}" class="px-10 py-4 bg-white text-on-primary-fixed font-bold rounded-md hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+      🎯 Voir les matchs
+    </a>
+    <a href="{% url 'leaderboard' %}" class="px-10 py-4 border border-outline-variant hover:bg-surface-bright/20 font-medium rounded-md transition-all text-on-surface">
+      🏆 Classement
+    </a>
+  </div>
+</section>
+
+<!-- ═══ Stats ═══ -->
+<section class="px-6 pb-16 max-w-5xl mx-auto fade-up fade-up-d1">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="glass-card rounded-xl p-6 text-center border border-white/5">
+      <div class="text-3xl font-headline font-bold text-primary mb-1">{{ total_matches }}</div>
+      <div class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Matchs</div>
+    </div>
+    <div class="glass-card rounded-xl p-6 text-center border border-white/5">
+      <div class="text-3xl font-headline font-bold text-secondary-fixed-dim mb-1">{{ total_predictions }}</div>
+      <div class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Prédictions</div>
+    </div>
+    <div class="glass-card rounded-xl p-6 text-center border border-white/5">
+      <div class="text-3xl font-headline font-bold text-tertiary-fixed-dim mb-1">{{ total_users }}</div>
+      <div class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Joueurs</div>
+    </div>
+    <div class="glass-card rounded-xl p-6 text-center border border-white/5">
+      <div class="text-3xl font-headline font-bold text-[#00ff88] mb-1">{{ live_matches|length }}</div>
+      <div class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">En Direct</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Sport Cards Grid ═══ -->
+<section class="px-6 pb-20 max-w-7xl mx-auto fade-up fade-up-d2">
+  <div class="flex items-center justify-between mb-8">
+    <h2 class="text-2xl font-headline font-bold text-white">Sports disponibles</h2>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    {% for sport in sports %}
+    <a href="{% url 'matches' %}?sport={{ sport.slug }}" class="glass-card group relative p-8 rounded-lg border-t-2
+      {% if forloop.counter == 1 %}border-[#00ff88]/50{% elif forloop.counter == 2 %}border-orange-500/50{% elif forloop.counter == 3 %}border-tertiary-fixed-dim/50{% else %}border-primary/50{% endif %}
+      overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-transform hover:-translate-y-2" style="text-decoration:none;">
+
+      <div class="absolute -top-10 -right-10 w-32 h-32
+        {% if forloop.counter == 1 %}bg-[#00ff88]/10 group-hover:bg-[#00ff88]/20{% elif forloop.counter == 2 %}bg-orange-500/10 group-hover:bg-orange-500/20{% elif forloop.counter == 3 %}bg-tertiary-fixed-dim/10 group-hover:bg-tertiary-fixed-dim/20{% else %}bg-primary/10 group-hover:bg-primary/20{% endif %}
+        blur-[40px] transition-all"></div>
+
+      <div class="relative z-10">
+        <div class="flex items-center justify-between mb-6">
+          <span class="text-4xl">{{ sport.icon }}</span>
+          <span class="text-[10px] font-label text-on-surface-variant opacity-60 uppercase">
+            {{ sport.matches.count }} match{{ sport.matches.count|pluralize:"s" }}
+          </span>
+        </div>
+        <h3 class="text-2xl font-headline font-bold mb-2 text-white">{{ sport.name }}</h3>
+        <p class="text-sm text-on-surface-variant">Voir les prédictions →</p>
+      </div>
+    </a>
+    {% empty %}
+    <div class="col-span-full glass-card rounded-xl p-12 text-center border border-white/5">
+      <div class="text-4xl mb-4">🌌</div>
+      <p class="text-on-surface-variant">Aucun sport disponible pour le moment.</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ═══ Upcoming Matches ═══ -->
+<section class="px-6 pb-20 max-w-7xl mx-auto fade-up fade-up-d3">
+  <div class="flex items-center justify-between mb-8">
+    <h2 class="text-2xl font-headline font-bold text-white">📅 Matchs à venir</h2>
+    <a href="{% url 'matches' %}" class="text-sm text-primary hover:text-white transition-colors">Voir tout →</a>
+  </div>
+
+  {% if upcoming_matches %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for match in upcoming_matches %}
+    <a href="{% url 'match_detail' match.pk %}" class="glass-card rounded-xl p-6 border border-white/5 hover:border-primary/30 transition-all hover:-translate-y-1 group" style="text-decoration:none;">
+      <div class="flex justify-between items-center mb-5">
+        <span class="text-[10px] font-label uppercase tracking-widest text-primary/70">{{ match.sport.icon }} {{ match.sport.name }}</span>
+        <span class="text-[10px] font-label text-on-surface-variant/60">{{ match.date|date:"d M · H:i" }}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <div class="text-center flex-1">
+          <div class="text-2xl mb-1">{{ match.team_a.logo_emoji }}</div>
+          <div class="text-sm font-bold text-white">{{ match.team_a.name }}</div>
+        </div>
+        <div class="text-xl font-headline font-black text-on-surface-variant/30 px-4">VS</div>
+        <div class="text-center flex-1">
+          <div class="text-2xl mb-1">{{ match.team_b.logo_emoji }}</div>
+          <div class="text-sm font-bold text-white">{{ match.team_b.name }}</div>
+        </div>
+      </div>
+      {% if match.league %}
+      <div class="mt-4 pt-3 border-t border-white/5 text-center">
+        <span class="text-[10px] font-label text-on-surface-variant/40 uppercase tracking-widest">{{ match.league }}</span>
+      </div>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="glass-card rounded-xl p-12 text-center border border-white/5">
+    <div class="text-4xl mb-4">🔭</div>
+    <p class="text-on-surface-variant mb-4">Aucun match programmé. L'univers se prépare…</p>
+    <a href="{% url 'matches' %}" class="px-6 py-2 bg-white/10 text-white text-sm rounded-lg hover:bg-white/20 transition-all border border-white/10">Voir les matchs terminés</a>
+  </div>
+  {% endif %}
+</section>
+
+<!-- ═══ Results + Leaderboard ═══ -->
+<section class="px-6 pb-32 max-w-7xl mx-auto">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+    <!-- Recent Results -->
+    {% if recent_results %}
+    <div class="fade-up">
+      <h2 class="text-xl font-headline font-bold text-white mb-6">✅ Résultats récents</h2>
+      <div class="glass-card rounded-xl border border-white/5 divide-y divide-white/5">
+        {% for match in recent_results %}
+        <a href="{% url 'match_detail' match.pk %}" class="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors" style="text-decoration:none;">
+          <div class="flex items-center gap-3 flex-1">
+            <span>{{ match.team_a.logo_emoji }}</span>
+            <span class="text-sm font-bold text-white truncate">{{ match.team_a.name }}</span>
+          </div>
+          <div class="text-center px-4">
+            <span class="font-headline font-black text-lg text-white">{{ match.score_a|default:"?" }} — {{ match.score_b|default:"?" }}</span>
+          </div>
+          <div class="flex items-center gap-3 flex-1 justify-end">
+            <span class="text-sm font-bold text-white truncate">{{ match.team_b.name }}</span>
+            <span>{{ match.team_b.logo_emoji }}</span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Top 5 Leaderboard -->
+    {% if top_users %}
+    <div class="fade-up fade-up-d1">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-headline font-bold text-white">🏆 Top Pronostiqueurs</h2>
+        <a href="{% url 'leaderboard' %}" class="text-sm text-primary hover:text-white transition-colors">Voir tout →</a>
+      </div>
+      <div class="glass-card rounded-xl border border-white/5 divide-y divide-white/5">
+        {% for profile in top_users %}
+        <div class="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
+          <div class="flex items-center gap-4">
+            <span class="w-8 text-center font-headline font-black
+              {% if forloop.counter == 1 %}text-yellow-400{% elif forloop.counter == 2 %}text-gray-300{% elif forloop.counter == 3 %}text-amber-600{% else %}text-on-surface-variant/40{% endif %}">
+              {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}
+            </span>
+            <span class="text-sm font-bold text-white">{{ profile.avatar_emoji }} {{ profile.user.username }}</span>
+          </div>
+          <div class="flex items-center gap-6 text-sm">
+            <span class="text-primary font-bold">{{ profile.points }} pts</span>
+            <span class="text-on-surface-variant/60 hidden sm:inline">{{ profile.accuracy }}%</span>
+            <span class="text-on-surface-variant/40 hidden sm:inline">🔥{{ profile.current_streak }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+{% endblock %}
