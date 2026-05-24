@@ -4,8 +4,10 @@ const FootballAPI = {
     "x-apisports-key": CONFIG.KEYS.apiFootball || ""
   },
 
-  async getFixtures(leagueId, season = 2025) {
-    const today = new Date().toISOString().split("T")[0];
+  async getFixtures(leagueId) {
+    const today = new Date().toISOString().split('T')[0];
+    const leagueKey = Object.keys(CONFIG.LEAGUES).find(key => CONFIG.LEAGUES[key].id === leagueId);
+    const season = CONFIG.LEAGUES[leagueKey]?.season || 2025;
     const url = `${CONFIG.FOOTBALL_API.baseUrl}/fixtures?league=${leagueId}&date=${today}&season=${season}`;
     const data = await CacheManager.fetch(url, CacheManager.TTL.fixtures, this.headers);
     console.log("[API-FOOTBALL] Fixtures chargées:", data?.response?.length, "matchs");
@@ -19,14 +21,18 @@ const FootballAPI = {
     return data;
   },
 
-  async getTeamStats(teamId, leagueId, season = 2025) {
+  async getTeamStats(teamId, leagueId) {
+    const leagueKey = Object.keys(CONFIG.LEAGUES).find(key => CONFIG.LEAGUES[key].id === leagueId);
+    const season = CONFIG.LEAGUES[leagueKey]?.season || 2023;
     const url = `${CONFIG.FOOTBALL_API.baseUrl}/teams/statistics?team=${teamId}&league=${leagueId}&season=${season}`;
     const data = await CacheManager.fetch(url, CacheManager.TTL.stats, this.headers);
     console.log("[API-FOOTBALL] Stats équipe récupérées:", teamId);
     return data;
   },
 
-  async getStandings(leagueId, season = 2025) {
+  async getStandings(leagueId) {
+    const leagueKey = Object.keys(CONFIG.LEAGUES).find(key => CONFIG.LEAGUES[key].id === leagueId);
+    const season = CONFIG.LEAGUES[leagueKey]?.season || 2023;
     const url = `${CONFIG.FOOTBALL_API.baseUrl}/standings?league=${leagueId}&season=${season}`;
     const data = await CacheManager.fetch(url, CacheManager.TTL.standings, this.headers);
     console.log("[API-FOOTBALL] Classement récupéré:", leagueId);

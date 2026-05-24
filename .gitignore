@@ -23,3 +23,9 @@ ENV/
 *.swo
 .DS_Store
 .env
+.env.local
+
+# Next.js
+.next/
+out/
+node_modules/

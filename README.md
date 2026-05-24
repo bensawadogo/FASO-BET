@@ -53,10 +53,21 @@ python seed_data.py
 ```
 
 ### 6. Lancer le serveur
+
+**Interface Next.js (pipeline 3 agents IA) — port 3001 :**
 ```bash
-python manage.py runserver
+npm install
+npm run dev
 ```
-Ouvrez ensuite votre navigateur à l'adresse : [http://127.0.0.1:8000](http://127.0.0.1:8000)
+→ [http://localhost:3001](http://localhost:3001) — **FASO BET** (prédictions sportives)
+
+> Le port **3000** est en général utilisé par **Kiibare** (bourse), un autre projet. Ne pas confondre les deux.
+
+**Interface Django classique :**
+```bash
+python manage.py runserver 8000
+```
+→ [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 ## 📁 Structure du Projet
 

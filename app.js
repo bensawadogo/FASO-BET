@@ -91,37 +91,48 @@ const App = {
       const data = await FootballAPI.getFixtures(leagueId);
       grid.innerHTML = "";
       if (!data.response?.length) {
-        grid.innerHTML = "<p>Aucun match aujourd'hui.</p>";
+        console.log("[APP] Aucun match réel (Plan Gratuit), affichage du match de test.");
+        const testMatch = {
+          fixture: { id: 0 },
+          league: { id: 2, name: "Ligue des Champions (DEMO)", logo: "https://media.api-sports.io/football/leagues/2.png" },
+          teams: {
+            home: { id: 85, name: "Paris Saint-Germain", logo: "https://media.api-sports.io/football/teams/85.png" },
+            away: { id: 541, name: "Real Madrid", logo: "https://media.api-sports.io/football/teams/541.png" }
+          }
+        };
+        this.renderMatchCard(testMatch, grid);
         return;
       }
-      data.response.forEach(match => {
-        const card = document.createElement("div");
-        card.className = "match-card glass-card";
-        card.innerHTML = `
-          <div class="match-header">
-            <img src="${match.league.logo}" class="league-logo-small" onerror="this.src='https://placehold.co/20x20?text=L'">
-            <span>${match.league.name}</span>
-          </div>
-          <div class="match-teams">
-            <div class="team">
-              <img src="${match.teams.home.logo}" class="team-logo" onerror="this.src='https://placehold.co/50x50?text=Home'">
-              <span>${match.teams.home.name}</span>
-            </div>
-            <div class="vs">VS</div>
-            <div class="team">
-              <img src="${match.teams.away.logo}" class="team-logo" onerror="this.src='https://placehold.co/50x50?text=Away'">
-              <span>${match.teams.away.name}</span>
-            </div>
-          </div>
-          <button class="analyze-btn" onclick="App.analyzeMatch('${match.teams.home.name.replace(/'/g, "\\'")}', '${match.teams.away.name.replace(/'/g, "\\'")}', ${match.teams.home.id}, ${match.teams.away.id}, ${match.league.id})">
-            🚀 ANALYSER CE MATCH
-          </button>
-        `;
-        grid.appendChild(card);
-      });
+      data.response.forEach(match => this.renderMatchCard(match, grid));
     } catch(e) {
       grid.innerHTML = "<p>Erreur chargement matchs.</p>";
     }
+  },
+
+  renderMatchCard(match, container) {
+    const card = document.createElement("div");
+    card.className = "match-card glass-card";
+    card.innerHTML = `
+      <div class="match-header">
+        <img src="${match.league.logo}" class="league-logo-small" onerror="this.src='placeholder.png'">
+        <span>${match.league.name}</span>
+      </div>
+      <div class="match-teams">
+        <div class="team">
+          <img src="${match.teams.home.logo}" class="team-logo" onerror="this.src='placeholder.png'">
+          <span>${match.teams.home.name}</span>
+        </div>
+        <div class="vs">VS</div>
+        <div class="team">
+          <img src="${match.teams.away.logo}" class="team-logo" onerror="this.src='placeholder.png'">
+          <span>${match.teams.away.name}</span>
+        </div>
+      </div>
+      <button class="analyze-btn" onclick="App.analyzeMatch('${match.teams.home.name.replace(/'/g, "\\'")}', '${match.teams.away.name.replace(/'/g, "\\'")}', ${match.teams.home.id}, ${match.teams.away.id}, ${match.league.id})">
+        🚀 ANALYSER CE MATCH
+      </button>
+    `;
+    container.appendChild(card);
   },
 
   async analyzeMatch(homeTeam, awayTeam, homeId, awayId, leagueId) {
