@@ -1,11 +1,20 @@
 import type { Metadata } from "next";
-import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { ApiErrorBoundary } from "@/components/error-boundary";
 
-const hankenGrotesk = Hanken_Grotesk({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-hanken",
+  variable: "--font-space-grotesk",
   display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -15,9 +24,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FASO BET — Prédictions Football IA",
+  title: "FASOBET | Analyse Stratégique Sportive",
   description:
-    "FASO BET by BEN-SAWADOGO — Prédictions sportives IA, pipeline multi-agents et value bets football",
+    "Dominez le terrain avec l'intelligence artificielle. Plus de 10 000 points de données analysés en temps réel pour un avantage stratégique incontestable.",
 };
 
 export default function RootLayout({
@@ -28,12 +37,13 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${hankenGrotesk.variable} ${jetbrainsMono.variable}`}
+      className={`dark ${spaceGrotesk.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
     >
-      <body className="font-sans relative overflow-x-hidden">
-        <div className="orb w-96 h-96 bg-cyan-500 -top-32 -left-32" />
-        <div className="orb w-80 h-80 bg-purple-600 top-1/2 -right-20" />
-        <main className="relative z-10">{children}</main>
+      <body className="font-body-md bg-surface-deep text-on-surface">
+        <ApiErrorBoundary serviceName="layout">
+          {children}
+        </ApiErrorBoundary>
       </body>
     </html>
   );

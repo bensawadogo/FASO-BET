@@ -1,0 +1,23 @@
+# ──────────────────────────────────────────────────────────
+# FasoBet — FastAPI Inference Engine (BLOC 2)
+# Python 3.11, agents IA, hot-reload
+# ──────────────────────────────────────────────────────────
+FROM python:3.11-slim AS base
+
+WORKDIR /app
+
+# Dépendances système
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Dépendances Python
+COPY requirements.fastapi.txt .
+RUN pip install --no-cache-dir -r requirements.fastapi.txt
+
+COPY . .
+
+EXPOSE 8001
+
+ENTRYPOINT ["python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]

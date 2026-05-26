@@ -1,0 +1,16 @@
+node_modules/
+.next/
+__pycache__/
+*.pyc
+.env
+.env.local
+.git/
+.gitignore
+*.md
+data/
+nerdytips-data/
+predictions/
+.vscode/
+*.log
+db.sqlite3
+staticfiles/

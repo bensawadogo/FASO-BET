@@ -5,6 +5,7 @@ import {
   type StatisticianOptions,
 } from "@/types/agent2.types";
 import type { VerifiedMatch } from "@/types/match.types";
+import type { HistoricalContext, LeaguePrior } from "@/types/historical.types";
 import { callClaudeJSON, loadFootballSkill } from "@/lib/anthropic";
 import { fetchH2H, fetchTeamStatistics } from "@/lib/football-api";
 import { getLeagueGoalsAverage, LEAGUES } from "@/lib/leagues";
@@ -68,8 +69,25 @@ function h2hSummary(h2h: Awaited<ReturnType<typeof fetchH2H>>, homeName: string)
   return `${homeName} ${homeWins}V-${draws}N sur ${h2h.length} matchs`;
 }
 
+/** Trouve le prior historique pour une ligue donnée */
+function findLeaguePrior(
+  leagueName: string,
+  country: string,
+  priors: LeaguePrior[]
+): LeaguePrior | null {
+  return (
+    priors.find(
+      (p) =>
+        p.league.toLowerCase().includes(leagueName.toLowerCase()) ||
+        (p.country === country &&
+          p.league.toLowerCase().includes(leagueName.toLowerCase()))
+    ) ?? null
+  );
+}
+
 async function analyzeMatchDeterministic(
-  match: VerifiedMatch
+  match: VerifiedMatch,
+  historical?: HistoricalContext | null
 ): Promise<MatchStatistics> {
   const season =
     Object.values(LEAGUES).find((l) => l.id === match.league_id)?.season ?? 2025;
@@ -184,8 +202,9 @@ Réponds UNIQUEMENT en JSON valide avec cette structure:
       }
     }
 
+    const historical = options.historical ?? null;
     const analyses = await Promise.all(
-      matches.map((m) => analyzeMatchDeterministic(m))
+      matches.map((m) => analyzeMatchDeterministic(m, historical))
     );
 
     const output: Agent2Output = {

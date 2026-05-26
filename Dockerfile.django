@@ -1,0 +1,47 @@
+# ──────────────────────────────────────────────────────────
+# FasoBet — Django Control Plane
+# Python 3.11, PostgreSQL, hot-reload
+# ──────────────────────────────────────────────────────────
+FROM python:3.11-slim AS base
+
+WORKDIR /app
+
+# Dépendances système
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Dépendances Python
+COPY requirements.txt .
+RUN pip install --no-cache-dir \
+    "django>=4.2,<5.0" \
+    psycopg2-binary \
+    djangorestframework \
+    django-cors-headers
+
+COPY . .
+
+EXPOSE 8000
+
+# Entrypoint : migrations + server
+COPY <<EOF /docker-entrypoint.sh
+#!/bin/sh
+set -e
+
+echo "⏳ Attente de PostgreSQL..."
+until PGPASSWORD=\$DJANGO_DB_PASSWORD psql -h "\$DJANGO_DB_HOST" -U "\$DJANGO_DB_USER" -d "\$DJANGO_DB_NAME" -c '\q' 2>/dev/null; do
+  sleep 1
+done
+echo "✅ PostgreSQL prêt"
+
+echo "📦 Migrations..."
+python manage.py migrate --noinput
+
+echo "🚀 Django prêt sur :8000"
+exec python manage.py runserver 0.0.0.0:8000
+EOF
+
+RUN chmod +x /docker-entrypoint.sh
+
+ENTRYPOINT ["/docker-entrypoint.sh"]

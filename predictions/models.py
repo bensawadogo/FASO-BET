@@ -93,3 +93,44 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} — {self.points} pts"
+
+class FeatureFlag(models.Model):
+    """Feature flags pour activer/désactiver des fonctionnalités dynamiquement."""
+    name = models.CharField(max_length=50, unique=True, help_text="Nom unique du feature flag")
+    is_active = models.BooleanField(default=False, help_text="Indique si le feature est activé")
+    description = models.TextField(blank=True, help_text="Description de la fonctionnalité")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Feature Flag"
+        verbose_name_plural = "Feature Flags"
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({'✅' if self.is_active else '❌'})"
+
+class AgentConfig(models.Model):
+    """Configuration des agents IA avec gestion des clés API et endpoints."""
+    AGENT_CHOICES = [
+        ('collector', 'Collector'),
+        ('statistician', 'Statistician'),
+        ('strategist', 'Strategist'),
+    ]
+
+    agent_name = models.CharField(max_length=50, choices=AGENT_CHOICES, unique=True)
+    api_key = models.CharField(max_length=255, help_text="Clé API pour le service externe")
+    endpoint = models.URLField(help_text="URL de l'endpoint API")
+    timeout = models.IntegerField(default=30, help_text="Timeout en secondes")
+    is_enabled = models.BooleanField(default=True, help_text="Indique si l'agent est activé")
+    max_retries = models.IntegerField(default=3, help_text="Nombre maximal de tentatives")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Configuration d'Agent IA"
+        verbose_name_plural = "Configurations d'Agents IA"
+        ordering = ['agent_name']
+
+    def __str__(self):
+        return f"{self.get_agent_name_display()} ({'✅' if self.is_enabled else '❌'})"

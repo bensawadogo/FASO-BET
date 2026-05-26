@@ -1,0 +1,26 @@
+FROM node:18-alpine AS base
+
+WORKDIR /app
+
+# Install dependencies only when needed
+COPY package.json package-lock.json ./
+RUN npm install --frozen-lockfile
+
+COPY . .
+
+FROM base AS development
+
+EXPOSE 3001
+
+# Development mode with hot reload
+CMD ["npm", "run", "dev"]
+
+FROM base AS production
+
+# Build Next.js application
+RUN npm run build
+
+EXPOSE 3001
+
+# Production mode
+CMD ["npm", "start"]

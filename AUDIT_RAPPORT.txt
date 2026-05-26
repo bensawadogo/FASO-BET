@@ -1,0 +1,69 @@
+=== AUDIT FINAL - FASOBET FRONTEND (build OK, 0 erreurs) ===
+Total: 19 points à corriger
+
+--- CRITIQUES (5) ---
+
+1. DONNÉES STATIQUES /match/[id] - src/app/match/[id]/page.tsx:122-147
+La page détail match utilise des données hardcodées (ASFA Yennenga vs Wydad AC). Aucun fetch API. Doit appeler apiClient.fastApiClient.predict() ou une route GET /matches/{id} pour récupérer les vraies données du backend.
+
+2. DONNÉES STATIQUES /league/[id] - src/app/league/[id]/page.tsx:65-168
+Seulement 2 ligues hardcodées dans l'objet LEAGUES (Ligue 1 Burkina + Botola Pro). Impossible d'afficher une nouvelle ligue sans modifier le code source. Doit fetcher les données depuis GET /api/sports/ ou similaire.
+
+3. COUPON DRAWER NON CONNECTÉ - src/app/match/[id]/page.tsx:295
+Le bouton "AJOUTER AU COUPON" n'ouvre pas le composant CouponDrawer. Le drawer existe (src/components/CouponDrawer.tsx) mais n'est pas importé ni contrôlé par un state dans la page match. Doit ajouter useState(isDrawerOpen) + importer CouponDrawer + connecter onClick.
+
+4. QUICK SCAN INACCESSIBLE - src/app/dashboard/page.tsx
+La page /dashboard/quick existe mais aucun lien/bouton n'y mène depuis le dashboard principal. Doit ajouter un bouton "Mode Compact" ou "Quick Scan" dans le header du dashboard.
+
+5. /bot/simulate NON PARAMÉTRÉE - src/app/bot/simulate/page.tsx
+La page est statique au lieu d'être /bot/simulate/[id]. Un seul match simulé (Wydad vs Al Ahly). Doit être renommée en [id]/page.tsx pour supporter plusieurs simulations (Wydad vs Al Ahly, ASFA vs Étoile Filante, etc).
+
+--- MAJEURS (5) ---
+
+6. H2H TABLEAU VIDE - src/app/match/[id]/page.tsx:282-285
+La table H2H affiche "Données H2H non disponibles" car le champ h2h n'est pas peuplé dans les données hardcodées. Doit soit intégrer des données mock, soit fetcher depuis le backend.
+
+7. BOTTOM NAVBAR INCOHÉRENTE - Plusieurs pages
+La route active n'est pas correctement surlignée en gold. Parfois COUPON est actif alors qu'on est sur /profile. Doit passer la route courante en props ou utiliser usePathname().
+
+8. FILTRE "LIGUE 1 BF" MANQUANT - src/app/dashboard/page.tsx:26-31
+L'array CATEGORIES a 5 filtres (TOUS, FOOTBALL, HAUTE CONFIANCE, CAF, EUROPE) mais manque "LIGUE 1 BF". Doit ajouter cette catégorie.
+
+9. REGISTER() NON TESTÉ - src/lib/api-client.ts:183-190
+La méthode register() appelle POST /register/ mais le backend Django peut ne pas avoir cette route exacte (la route Django est /register/ pas /api/register/). Doit vérifier l'URL exacte et tester.
+
+10. PAS DE REFRESH TOKEN AUTO - src/app/login/page.tsx:86-98
+Le JWT est stocké dans localStorage mais expire après quelques heures. Aucun mécanisme de refresh automatique via /api/token/refresh/. Doit ajouter un interceptor ou un useEffect qui vérifie l'expiration et refresh.
+
+--- MINEURS (6) ---
+
+11. BOUTONS href="#" - Plusieurs pages
+Les liens COUPON, PRÉMIUM, COMPTE dans les BottomNavBar pointent vers "#". Doit pointer vers les vraies routes ou utiliser un onClick avec état.
+
+12. IMG SANS FALLBACK - src/app/match/[id]/page.tsx:175,184
+Les logos d'équipe utilisent <img> sans onError. Si l'URL est invalide, l'image reste cassée. Doit ajouter onError qui remplace par l'icône Shield.
+
+13. PAS DE LOADING STATE - src/app/match/[id]/page.tsx
+La page affiche directement les données sans squelette de chargement. Doit ajouter un état isLoading + spinner.
+
+14. PAS DE PAGE 404 - Absent
+Pas de fichier not-found.tsx. Next.js utilise le fallback par défaut.
+
+15. animate-spin-slow NON DÉFINI - src/app/league/[id]/page.tsx
+La classe animate-spin-slow est utilisée mais pas définie dans tailwind.config.ts. Doit ajouter l'animation dans la config.
+
+16. METADATA PAR PAGE - src/app/layout.tsx
+Toutes les pages ont le même titre SEO. Doit exporter des metadata par page (title + description).
+
+--- COSMÉTIQUES (3) ---
+
+17. ICÔNE ExternalLink MANQUANTE - Plusieurs fichiers
+L'icône ExternalLink est importée dans /match/[id] mais absente de certains autres fichiers qui en ont besoin.
+
+18. ESPACEMENT INCOHÉRENT - Plusieurs pages
+space-y-stack-lg vs space-y-2 incohérent selon les pages.
+
+19. CONSOLE.LOG RÉSIDUELS - Nettoyage général
+
+=== FIN DU RAPPORT ===
+Build: SUCCESS (21 routes, 0 erreurs, ~87.3 kB shared JS)

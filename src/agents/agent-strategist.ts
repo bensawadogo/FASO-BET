@@ -8,7 +8,9 @@ import {
 } from "@/types/agent3.types";
 import type { MatchStatistics } from "@/types/agent2.types";
 import type { VerifiedMatch } from "@/types/match.types";
+import type { HistoricalContext, MarketCalibration } from "@/types/historical.types";
 import { callPerplexityJSON, loadFootballSkill } from "@/lib/perplexity";
+import { getCalibratedConfidence, riskGate } from "@/lib/calibration";
 
 const COMBO_TARGETS = [5, 10, 20, 50, 100, 300, 500, 1000];
 
@@ -67,7 +69,8 @@ function needsDoubleChance(match: VerifiedMatch, stats: MatchStatistics): boolea
 
 function buildPrediction(
   match: VerifiedMatch,
-  stats: MatchStatistics
+  stats: MatchStatistics,
+  calibrations?: MarketCalibration[]
 ): MatchPrediction {
   const isFriendly = match.match_type.includes("friendly");
   const overProb = stats.poisson.prob_over_2_5;
@@ -132,7 +135,32 @@ function buildPrediction(
   confidence = Math.min(CONFIDENCE_MAX, Math.max(CONFIDENCE_MIN, confidence));
   if (isFriendly) confidence = Math.min(FRIENDLY_MAX_CONFIDENCE, confidence);
 
-  const signal = resolveSignal(confidence, value, consensus, isFriendly);
+  // ─── Calibration historique ──────────────────────────────────
+  let finalConfidence = confidence;
+  let gateNote: string | undefined;
+
+  if (calibrations && calibrations.length > 0) {
+    const normalizedMarket = best.market === "Over 2.5" ? "over_under" : best.market === "BTTS Oui" ? "btts" : "final_result";
+    finalConfidence = getCalibratedConfidence(confidence, normalizedMarket, calibrations);
+
+    const gate = riskGate(
+      finalConfidence,
+      confidence,
+      value,
+      calibrations,
+      match.match_type,
+      normalizedMarket
+    );
+
+    if (!gate.accepted) {
+      gateNote = gate.reasons.join("; ");
+    }
+    if (gate.adjustedConfidence !== undefined) {
+      finalConfidence = gate.adjustedConfidence;
+    }
+  }
+
+  const signal = resolveSignal(finalConfidence, value, consensus, isFriendly);
   const risk =
     signal === "value_bet" ? "FAIBLE" : signal === "neutral" ? "MOYEN" : "ELEVE";
 
@@ -145,7 +173,7 @@ function buildPrediction(
     market,
     selection,
     min_odds: Math.round(minOdds * 100) / 100,
-    confidence,
+    confidence: finalConfidence,
     risk,
     signal,
     value: Math.round(value * 1000) / 1000,
@@ -197,12 +225,13 @@ function runDeterministic(input: StrategistInput): Agent3Output {
   const statsMap = new Map(
     input.statistics.analyses.map((a) => [a.match_id, a])
   );
+  const calibrations = input.historical?.marketCalibrations;
 
   const predictions = input.matches
     .map((m) => {
       const stats = statsMap.get(m.id);
       if (!stats) return null;
-      return buildPrediction(m, stats);
+      return buildPrediction(m, stats, calibrations);
     })
     .filter((p): p is MatchPrediction => p !== null)
     .sort((a, b) => {

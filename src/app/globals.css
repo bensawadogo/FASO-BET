@@ -4,54 +4,79 @@
 
 @layer base {
   body {
-    @apply bg-surface-container-lowest text-on-surface font-sans;
+    @apply bg-surface-deep text-on-surface font-body-md;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    min-height: max(884px, 100dvh);
   }
 
   h1, h2, h3, h4 {
-    @apply font-display font-black uppercase tracking-tighter;
-  }
-
-  .font-data-label {
-    @apply font-data text-[10px] tracking-widest uppercase;
+    @apply font-headline-md tracking-tight;
   }
 }
 
 @layer components {
-  .glass-header {
-    @apply bg-surface/80 backdrop-blur-md border-b border-outline-variant/20 sticky top-0 z-40;
+  /* ─── Terminal Grid ───────────────────────────────── */
+  .terminal-grid {
+    background-image: radial-gradient(#1b4332 0.5px, transparent 0.5px);
+    background-size: 24px 24px;
   }
-  
+
+  /* ─── Bordures / Cartes ───────────────────────────── */
+  .etched-border {
+    @apply border border-outline-variant;
+  }
+
+  .ia-highlight {
+    @apply border border-ia-gold;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.1);
+  }
+
+  /* ─── Boutons ─────────────────────────────────────── */
   .btn-primary {
-    @apply bg-primary text-surface font-bold uppercase tracking-widest px-6 py-3 rounded-xl hover:scale-105 active:scale-95 transition-all;
+    @apply bg-primary-container text-text-primary font-bold uppercase tracking-wide
+           h-touch-target-min rounded flex items-center justify-center gap-2
+           hover:opacity-90 active:scale-95 transition-all;
   }
-  
+
+  .btn-gold {
+    @apply bg-ia-gold text-surface-deep font-bold uppercase tracking-wide
+           h-touch-target-min rounded flex items-center justify-center
+           hover:opacity-90 active:scale-95 transition-all;
+  }
+
+  .btn-outline {
+    @apply border border-outline-variant text-text-primary font-bold uppercase tracking-wide
+           h-touch-target-min rounded flex items-center justify-center
+           hover:bg-surface-bright/10 transition-all;
+  }
+
+  /* ─── Inputs ──────────────────────────────────────── */
   .input-field {
-    @apply bg-surface-container-highest border border-outline-variant/20 rounded-lg p-3 text-on-surface focus:outline-none focus:border-primary/50 transition-colors;
+    @apply bg-surface-container-highest border border-outline-variant/20
+           rounded-lg p-3 text-on-surface
+           focus:outline-none focus:border-primary/50 transition-colors;
+  }
+
+  /* ─── Hide scrollbar ──────────────────────────────── */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* ─── Material Symbols fallback ───────────────────── */
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+  }
+  .fill-icon {
+    font-variation-settings: 'FILL' 1;
   }
 }
 
-/* Orbs */
-.orb {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.35;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Hide scrollbar but keep functionality */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* RWD: Prevent text overflow on small screens */
+/* ─── RWD ─────────────────────────────────────────── */
 @media (max-width: 480px) {
   .font-display-lg {
     @apply text-sm;

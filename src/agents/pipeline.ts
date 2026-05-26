@@ -146,13 +146,25 @@ export async function runPipeline(
     };
   }
 
+  // Charger le contexte historique pour enrichir les statistiques
+  console.log("[Pipeline] Chargement du contexte historique...");
+  const historicalContext = await getHistoricalContext();
+  if (historicalContext) {
+    console.log(
+      `[Pipeline] Contexte chargé : ${historicalContext.leaguePriors.length} ligues, ${historicalContext.marketCalibrations.length} calibrations`
+    );
+  } else {
+    console.warn("[Pipeline] Contexte historique non disponible (mode dégradé).");
+  }
+
   let statistics: Agent2Output;
 
   try {
     console.log("[Pipeline] Exécution de l'agent Statisticien...");
     statistics = await runAgentWithTimeout(() =>
       agentStatistician.run({
-        matches: collected.verified_matches
+        matches: collected.verified_matches,
+        historical: historicalContext,
       }),
     "Statisticien");
   } catch (e) {
@@ -172,7 +184,8 @@ export async function runPipeline(
     predictions = await runAgentWithTimeout(() =>
       agentStrategist.run({
         matches: collected.verified_matches,
-        statistics
+        statistics,
+        historical: historicalContext,
       }),
     "Stratégiste");
   } catch (e) {

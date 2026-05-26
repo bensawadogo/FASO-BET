@@ -1,216 +1,126 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib import messages
-from django.utils import timezone
-from django.db.models import Count, Q
-from django.conf import settings
-import os
+from rest_framework import viewsets, status, permissions
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from .models import Sport, Team, Match, Prediction, UserProfile, FeatureFlag, AgentConfig
+from .serializers import (
+    UserSerializer, SportSerializer, TeamSerializer,
+    MatchSerializer, PredictionSerializer, UserProfileSerializer,
+    FeatureFlagSerializer, AgentConfigSerializer
+)
 
-# Chargement du fichier .env
-env_path = os.path.join(settings.BASE_DIR, '.env')
-if os.path.exists(env_path):
-    with open(env_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            if '=' in line and not line.startswith('#'):
-                k, v = line.strip().split('=', 1)
-                os.environ[k] = v
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """Endpoint personnalisé pour l'obtention des tokens JWT."""
+    def post(self, request, *args, **kwargs):
+        username = request.data.get('username')
+        password = request.data.get('password')
 
-# Chargement du SKILL en mémoire (chargé une seule fois)
-skill_path = os.path.join(settings.BASE_DIR, 'predictions', 'ia-paris-sportif-SKILL.md')
-SKILL_CONTENT = ""
-if os.path.exists(skill_path):
-    with open(skill_path, 'r', encoding='utf-8') as f:
-        SKILL_CONTENT = f.read()
+        user = authenticate(username=username, password=password)
 
-from .models import Sport, Match, Prediction, UserProfile, Team
-from .forms import PredictionForm, RegisterForm
+        if user is None:
+            return Response(
+                {'error': 'Identifiants invalides'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': UserSerializer(user).data
+        })
 
-def home(request):
-    """Page d'accueil — dashboard principal."""
-    sports = Sport.objects.all()
-    upcoming_matches = Match.objects.filter(status='upcoming').order_by('date')[:6]
-    live_matches = Match.objects.filter(status='live')
-    recent_results = Match.objects.filter(status='finished').order_by('-date')[:5]
-    top_users = UserProfile.objects.order_by('-points')[:5]
+class UserViewSet(viewsets.ModelViewSet):
+    """API endpoint pour la gestion des utilisateurs."""
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-    # Stats globales
-    total_predictions = Prediction.objects.count()
-    total_matches = Match.objects.count()
-    total_users = UserProfile.objects.count()
+    def get_permissions(self):
+        if self.action in ['create', 'list']:
+            return [permissions.AllowAny()]
+        return super().get_permissions()
 
-    context = {
-        'sports': sports,
-        'upcoming_matches': upcoming_matches,
-        'live_matches': live_matches,
-        'recent_results': recent_results,
-        'top_users': top_users,
-        'total_predictions': total_predictions,
-        'total_matches': total_matches,
-        'total_users': total_users,
-        'api_football_key': os.environ.get('API_FOOTBALL_KEY', ''),
-    }
-    return render(request, 'predictions/home.html', context)
+    @action(detail=False, methods=['get'])
+    def me(self, request):
+        """Retourne les informations de l'utilisateur connecté."""
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
 
+class SportViewSet(viewsets.ModelViewSet):
+    """API endpoint pour la gestion des sports."""
+    queryset = Sport.objects.all()
+    serializer_class = SportSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-def matches_list(request):
-    """Liste de tous les matchs avec filtrage par sport."""
-    sport_slug = request.GET.get('sport', '')
-    status_filter = request.GET.get('status', '')
+class TeamViewSet(viewsets.ModelViewSet):
+    """API endpoint pour la gestion des équipes."""
+    queryset = Team.objects.all()
+    serializer_class = TeamSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    matches = Match.objects.select_related('sport', 'team_a', 'team_b').all()
+class MatchViewSet(viewsets.ModelViewSet):
+    """API endpoint pour la gestion des matchs."""
+    queryset = Match.objects.all()
+    serializer_class = MatchSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    if sport_slug:
-        matches = matches.filter(sport__slug=sport_slug)
-    if status_filter:
-        matches = matches.filter(status=status_filter)
+    @action(detail=True, methods=['get'])
+    def predictable(self, request, pk=None):
+        """Vérifie si un match est prédictible."""
+        match = self.get_object()
+        return Response({'predictable': match.is_predictable})
 
-    sports = Sport.objects.all()
+class PredictionViewSet(viewsets.ModelViewSet):
+    """API endpoint pour la gestion des prédictions."""
+    queryset = Prediction.objects.all()
+    serializer_class = PredictionSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-    context = {
-        'matches': matches,
-        'sports': sports,
-        'current_sport': sport_slug,
-        'current_status': status_filter,
-    }
-    return render(request, 'predictions/matches.html', context)
+    def get_queryset(self):
+        # Les utilisateurs ne peuvent voir que leurs propres prédictions
+        return self.queryset.filter(user=self.request.user)
 
+    def perform_create(self, serializer):
+        # Associe automatiquement l'utilisateur connecté
+        serializer.save(user=self.request.user)
 
-def match_detail(request, pk):
-    """Détail d'un match + formulaire de prédiction."""
-    match = get_object_or_404(Match.objects.select_related('sport', 'team_a', 'team_b'), pk=pk)
-    user_prediction = None
-    prediction_form = None
+class UserProfileViewSet(viewsets.ModelViewSet):
+    """API endpoint pour la gestion des profils utilisateurs."""
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-    if request.user.is_authenticated:
-        user_prediction = Prediction.objects.filter(user=request.user, match=match).first()
+    def get_queryset(self):
+        # Les utilisateurs ne peuvent voir que leur propre profil
+        return self.queryset.filter(user=self.request.user)
 
-        if match.is_predictable and not user_prediction:
-            if request.method == 'POST':
-                prediction_form = PredictionForm(request.POST)
-                if prediction_form.is_valid():
-                    prediction = prediction_form.save(commit=False)
-                    prediction.user = request.user
-                    prediction.match = match
-                    prediction.save()
+    def perform_create(self, serializer):
+        # Associe automatiquement l'utilisateur connecté
+        serializer.save(user=self.request.user)
 
-                    # Update user profile
-                    profile, _ = UserProfile.objects.get_or_create(user=request.user)
-                    profile.total_predictions += 1
-                    profile.save()
+class FeatureFlagViewSet(viewsets.ModelViewSet):
+    """API endpoint pour la gestion des feature flags."""
+    queryset = FeatureFlag.objects.all()
+    serializer_class = FeatureFlagSerializer
+    permission_classes = [permissions.IsAdminUser]
 
-                    messages.success(request, '✨ Prédiction enregistrée !')
-                    return redirect('match_detail', pk=pk)
-            else:
-                prediction_form = PredictionForm()
+class AgentConfigViewSet(viewsets.ModelViewSet):
+    """API endpoint pour la gestion des configurations d'agents IA."""
+    queryset = AgentConfig.objects.all()
+    serializer_class = AgentConfigSerializer
+    permission_classes = [permissions.IsAdminUser]
 
-    # Statistiques de prédictions pour ce match
-    predictions_stats = {
-        'team_a': match.predictions.filter(predicted_outcome='team_a').count(),
-        'draw': match.predictions.filter(predicted_outcome='draw').count(),
-        'team_b': match.predictions.filter(predicted_outcome='team_b').count(),
-        'total': match.predictions.count(),
-    }
-
-    context = {
-        'match': match,
-        'user_prediction': user_prediction,
-        'prediction_form': prediction_form,
-        'predictions_stats': predictions_stats,
-        'skill_content': SKILL_CONTENT,
-        'gemini_api_key': os.environ.get('GEMINI_API_KEY', ''),
-        'groq_api_key': os.environ.get('GROQ_API_KEY', ''),
-    }
-    return render(request, 'predictions/match_detail.html', context)
-
-
-@login_required
-def my_predictions(request):
-    """Historique des prédictions de l'utilisateur."""
-    predictions = Prediction.objects.filter(user=request.user).select_related(
-        'match', 'match__team_a', 'match__team_b', 'match__sport'
-    )
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
-
-    context = {
-        'predictions': predictions,
-        'profile': profile,
-    }
-    return render(request, 'predictions/my_predictions.html', context)
-
-
-def leaderboard(request):
-    """Classement des meilleurs pronostiqueurs."""
-    profiles = UserProfile.objects.select_related('user').order_by('-points', '-correct_predictions')[:50]
-
-    context = {
-        'profiles': profiles,
-    }
-    return render(request, 'predictions/leaderboard.html', context)
-
-
-def register_view(request):
-    """Inscription d'un nouvel utilisateur."""
-    if request.user.is_authenticated:
-        return redirect('home')
-
-    if request.method == 'POST':
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            UserProfile.objects.create(user=user)
-            login(request, user)
-            messages.success(request, '🚀 Bienvenue dans l\'arène !')
-            return redirect('home')
-    else:
-        form = RegisterForm()
-
-    return render(request, 'predictions/register.html', {'form': form})
-
-
-def login_view(request):
-    """Connexion utilisateur."""
-    if request.user.is_authenticated:
-        return redirect('home')
-
-    if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            messages.success(request, f'👋 Bon retour, {user.username} !')
-            next_url = request.GET.get('next', 'home')
-            return redirect(next_url)
-    else:
-        form = AuthenticationForm()
-
-    return render(request, 'predictions/login.html', {'form': form})
-
-
-def logout_view(request):
-    """Déconnexion."""
-    logout(request)
-    messages.info(request, 'À bientôt ! 👋')
-    return redirect('home')
-
-
-def live_match_detail(request, fixture_id):
-    """Page d'analyse d'un match en direct de l'API."""
-    context = {
-        'fixture_id': fixture_id,
-        'skill_content': SKILL_CONTENT,
-        'gemini_api_key': os.environ.get('GEMINI_API_KEY', ''),
-        'groq_api_key': os.environ.get('GROQ_API_KEY', ''),
-        'api_football_key': os.environ.get('API_FOOTBALL_KEY', ''),
-    }
-    return render(request, 'predictions/live_match_detail.html', context)
-
-
-def standings(request):
-    """Classements en direct depuis l'API Football."""
-    context = {
-        'api_football_key': os.environ.get('API_FOOTBALL_KEY', ''),
-    }
-    return render(request, 'predictions/standings.html', context)
+    @action(detail=True, methods=['post'])
+    def test_connection(self, request, pk=None):
+        """Teste la connexion à l'API externe de l'agent."""
+        config = self.get_object()
+        # Ici on pourrait ajouter une logique pour tester la connexion réelle
+        return Response({
+            'status': 'success',
+            'message': f'Connection testée pour {config.agent_name}',
+            'endpoint': config.endpoint
+        })

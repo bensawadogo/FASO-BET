@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Sport, Team, Match, Prediction, UserProfile
+from .models import Sport, Team, Match, Prediction, UserProfile, FeatureFlag, AgentConfig
 
 
 @admin.register(Sport)
@@ -30,3 +30,25 @@ class PredictionAdmin(admin.ModelAdmin):
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'points', 'total_predictions', 'correct_predictions', 'accuracy', 'current_streak')
+
+@admin.register(FeatureFlag)
+class FeatureFlagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'is_active', 'created_at', 'updated_at')
+    list_editable = ('is_active',)
+    search_fields = ('name', 'description')
+    list_filter = ('is_active',)
+
+@admin.register(AgentConfig)
+class AgentConfigAdmin(admin.ModelAdmin):
+    list_display = ('agent_name', 'endpoint', 'is_enabled', 'timeout', 'max_retries')
+    list_editable = ('is_enabled', 'timeout', 'max_retries')
+    list_filter = ('agent_name', 'is_enabled')
+    search_fields = ('agent_name', 'endpoint')
+    fieldsets = (
+        (None, {
+            'fields': ('agent_name', 'is_enabled')
+        }),
+        ('Configuration API', {
+            'fields': ('api_key', 'endpoint', 'timeout', 'max_retries')
+        }),
+    )

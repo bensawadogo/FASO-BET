@@ -1,0 +1,24 @@
+# --- FasoBet - Celery Worker (pipeline async) ---
+# Python 3.11, partage le code FastAPI
+# Connexion Redis pour broker, Postgres pour résultats
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    netcat-openbsd \
+    redis-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.fastapi.txt .
+RUN pip install --no-cache-dir -r requirements.fastapi.txt
+RUN pip install --no-cache-dir "celery>=5.4.0,<6.0.0"
+
+COPY . .
+
+EXPOSE 0
+
+CMD ["celery", "-A", "api.tasks", "worker", "--loglevel=info", "--concurrency=4"]

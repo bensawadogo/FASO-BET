@@ -38,4 +38,5 @@ export type Agent2Output = z.infer<typeof Agent2OutputSchema>;
 
 export interface StatisticianOptions {
   matches: import("./match.types").VerifiedMatch[];
+  historical?: import("./historical.types").HistoricalContext | null;
 }

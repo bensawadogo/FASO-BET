@@ -54,4 +54,5 @@ export type Agent3Output = z.infer<typeof Agent3OutputSchema>;
 export interface StrategistInput {
   matches: import("./match.types").VerifiedMatch[];
   statistics: import("./agent2.types").Agent2Output;
+  historical?: import("./historical.types").HistoricalContext | null;
 }
