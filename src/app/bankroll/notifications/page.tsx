@@ -14,6 +14,7 @@ import {
   Medal,
   User,
 } from "lucide-react";
+import { ToggleSwitch } from "@/components/ToggleSwitch";
 
 // ─── Types ─────────────────────────────────────────────────
 interface ToggleItem {
@@ -28,36 +29,6 @@ interface NotificationChannel {
   key: string;
   label: string;
   checked: boolean;
-}
-
-// ─── ToggleSwitch ──────────────────────────────────────────
-function ToggleSwitch({
-  checked,
-  onChange,
-  ariaLabel,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  ariaLabel: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={ariaLabel}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-12 items-center rounded-full transition-all duration-300 ${
-        checked ? "bg-primary-container" : "bg-surface-container-highest"
-      }`}
-    >
-      <span
-        className={`inline-block h-5 w-5 rounded-full transition-all duration-300 ${
-          checked ? "translate-x-[26px] bg-primary" : "translate-x-[2px] bg-on-surface-variant"
-        }`}
-      />
-    </button>
-  );
 }
 
 // ─── Main Page ─────────────────────────────────────────────
@@ -110,7 +81,7 @@ export default function BankrollNotificationsPage() {
       channels: channels.filter((c) => c.checked).map((c) => c.key),
     };
     if (typeof window !== "undefined") {
-      localStorage.setItem("fasobet_bankroll_notifications", JSON.stringify(config));
+      localStorage.setItem("fasobet by ben rachid sawadogo_bankroll_notifications", JSON.stringify(config));
     }
     router.back();
   };
@@ -138,7 +109,7 @@ export default function BankrollNotificationsPage() {
         </div>
       </header>
 
-      <main className="pt-20 px-margin-mobile max-w-md mx-auto space-y-stack-lg">
+      <main className="pt-20 px-margin-mobile max-w-md mx-auto space-y-4">
         {/* Strategy Section */}
         <section className="space-y-stack-md">
           <h2 className="font-label-caps text-label-caps text-text-secondary uppercase">
@@ -317,7 +288,7 @@ export default function BankrollNotificationsPage() {
           <span className="font-label-caps text-label-caps uppercase">ANALYSES</span>
         </Link>
         <Link
-          href="#"
+          href="/bankroll"
           className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
         >
           <ScrollText className="w-6 h-6" />

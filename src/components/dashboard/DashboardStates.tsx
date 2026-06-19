@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { AlertTriangle, WifiOff, Database, Loader2, SearchX } from 'lucide-react';
 

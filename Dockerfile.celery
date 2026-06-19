@@ -1,24 +1,38 @@
-# --- FasoBet - Celery Worker (pipeline async) ---
-# Python 3.11, partage le code FastAPI
-# Connexion Redis pour broker, Postgres pour résultats
+# ──────────────────────────────────────────────────────────
+# FasoBet — Celery Worker (Multi-stage Production)
+# Partage builder avec Django pour ML deps (XGBoost, LightGBM)
+# Size: ~2.69GB → ~700MB optimisé
+# ──────────────────────────────────────────────────────────
 
-FROM python:3.11-slim
+FROM python:3.12-slim AS builder
 
-WORKDIR /app
+WORKDIR /build
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
-    netcat-openbsd \
-    redis-tools \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.fastapi.txt .
-RUN pip install --no-cache-dir -r requirements.fastapi.txt
-RUN pip install --no-cache-dir "celery>=5.4.0,<6.0.0"
+# Merge Django + FastAPI requirements
+COPY requirements.django.txt requirements.fastapi.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels \
+    -r requirements.django.txt \
+    -r requirements.fastapi.txt
+
+# ──────────────────────────────────────────────────────────
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /wheels /wheels
+RUN pip install --no-cache /wheels/*
 
 COPY . .
 
-EXPOSE 0
+# No EXPOSE — Celery not HTTP
 
-CMD ["celery", "-A", "api.tasks", "worker", "--loglevel=info", "--concurrency=4"]
+CMD ["celery", "-A", "sportpred", "worker", "--loglevel=info", "--concurrency=4", "--max-tasks-per-child=1000"]

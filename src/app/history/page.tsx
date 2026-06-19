@@ -1,19 +1,19 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   User,
   ChevronRight,
   TrendingUp,
-  Star,
-  ChartBar,
-  ScrollText,
-  Medal,
   X,
   BarChart3,
   Zap,
+  Filter,
 } from "lucide-react";
+import { BottomNavBar } from "@/components/ui/BottomNavBar";
+import { apiClient } from "@/lib/api-client";
+import { routes } from "@/lib/routes";
 
 // ─── Types ─────────────────────────────────────────────────
 interface HistoryEntry {
@@ -36,7 +36,6 @@ type DateGroup = { label: string; entries: HistoryEntry[] };
 
 // ─── Success Ring ──────────────────────────────────────────
 function SuccessRing({ percent }: { percent: number }) {
-  // SVG circle: r=16, circumference=2*PI*16 ≈ 100.53
   const circumference = 2 * Math.PI * 16;
   const offset = circumference * (1 - percent / 100);
 
@@ -149,7 +148,7 @@ function HistoryCard({ entry }: { entry: HistoryEntry }) {
 
       {/* Detailed Action */}
       <Link
-        href={`/match/${entry.id}`}
+        href={routes.matchDetail(entry.id)}
         className="bg-surface-container-high/50 px-stack-md py-2 flex justify-between items-center text-on-surface-variant hover:text-ia-gold transition-colors"
       >
         <span className="text-[11px] font-label-caps">
@@ -161,42 +160,130 @@ function HistoryCard({ entry }: { entry: HistoryEntry }) {
   );
 }
 
+// ─── Mini ROI chart (SVG) ──────────────────────────────────
+function RoiChart({ data }: { data: { date: string; roi: number }[] }) {
+  if (data.length === 0) return null;
+  const max = Math.max(...data.map(d => Math.abs(d.roi)), 1);
+  const w = 200, h = 60;
+  return (
+    <svg width={w} height={h} className="w-full max-w-[200px]" viewBox={`0 0 ${w} ${h}`}>
+      {data.map((d, i) => {
+        const x = (i / (data.length - 1)) * (w - 4) + 2;
+        const barH = (Math.abs(d.roi) / max) * (h - 8);
+        const y = d.roi >= 0 ? h - 4 - barH : h - 4;
+        const color = d.roi >= 0 ? "#34d399" : "#ef4444";
+        return <rect key={i} x={x - 1} y={y} width={Math.max(w / data.length - 2, 2)} height={Math.max(barH, 1)} fill={color} rx={1} opacity={0.8} />;
+      })}
+    </svg>
+  );
+}
+
+// ─── Inline filter chips ───────────────────────────────────
+function FilterChips({ leagues, selected, onChange }: { leagues: string[]; selected: string; onChange: (v: string) => void }) {
+  const all = ["Tous", ...leagues];
+  return (
+    <div className="flex gap-2 overflow-x-auto no-scrollbar py-2">
+      {all.map((l) => (
+        <button key={l} onClick={() => onChange(l === "Tous" ? "" : l)} className={`font-black text-[9px] uppercase px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${(selected === "" && l === "Tous") || selected === l ? "bg-ia-gold text-surface-deep" : "bg-surface-raised border border-outline-variant text-text-secondary"}`}>
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+}
+function formatDateLabel(dateStr: string): string {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((today.getTime() - target.getTime()) / 86400000);
+
+  if (diffDays === 0) return `AUJOURD'HUI — ${d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }).toUpperCase()}`;
+  if (diffDays === 1) return `HIER — ${d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }).toUpperCase()}`;
+  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' }).toUpperCase();
+}
+
+function mapResultToStatus(result: string): HistoryEntry["status"] {
+  if (result === "won") return "won";
+  if (result === "lost") return "lost";
+  return "in_progress";
+}
+
 // ─── Main Page ─────────────────────────────────────────────
 export default function HistoryPage() {
   const [showPerformanceCard, setShowPerformanceCard] = useState(true);
+  const [competFilter, setCompetFilter] = useState("");
+  const [historyData, setHistoryData] = useState<{ results: { id: string; match: { home: string; away: string; date: string; league: string }; prediction: string; confidence: number; result: string }[]; count: number }>({ results: [], count: 0 });
 
-  const groups: DateGroup[] = [
-    {
-      label: "AUJOURD'HUI — 24 MAI",
-      entries: [
-        {
-          id: "m1", date: "2026-05-24", league: "Premier League", home: "Man. City", away: "Arsenal",
-          time: "20:00", status: "won", ai_pick: "Victoire Domicile", odds: 1.85,
-          result: "3 - 1", accuracy: 92, is_analyzed: true,
-        },
-        {
-          id: "m2", date: "2026-05-24", league: "La Liga", home: "Real Madrid", away: "Betis",
-          time: "18:30", status: "lost", ai_pick: "Plus de 2.5 Buts", odds: 1.62,
-          result: "1 - 0", accuracy: undefined, is_analyzed: false,
-        },
-      ],
-    },
-    {
-      label: "HIER — 23 MAI",
-      entries: [
-        {
-          id: "m3", date: "2026-05-23", league: "Champions League", home: "Dortmund", away: "PSG",
-          time: "21:00", status: "in_progress", ai_pick: "Les deux marquent", odds: 1.55,
-          result: "1 - 1", live_minute: "72", is_analyzed: true,
-        },
-        {
-          id: "m4", date: "2026-05-23", league: "Ligue 1", home: "Marseille", away: "Lyon",
-          time: "21:00", status: "won", ai_pick: "Handicap (0) H", odds: 1.95,
-          result: "2 - 0", accuracy: 100, is_analyzed: false,
-        },
-      ],
-    },
-  ];
+  useEffect(() => {
+    apiClient.controlApi.getHistorical().then((res) => {
+      if (res.success && res.data) {
+        setHistoryData(res.data);
+      }
+    }).catch((err) => {
+      console.error("History fetch failed", err);
+      setHistoryData({ results: [], count: 0 });
+    });
+  }, []);
+
+  const allItems = historyData.results;
+  const competitions = useMemo(() => {
+    const s = new Set<string>();
+    allItems.forEach((i) => { if (i.match.league) s.add(i.match.league); });
+    return Array.from(s).sort();
+  }, [allItems]);
+
+  const filtered = competFilter ? allItems.filter((i) => i.match.league === competFilter) : allItems;
+
+  const items = filtered;
+  const total = items.length;
+  const won = items.filter((i) => i.result === "won").length;
+  const winRate = total > 0 ? Math.round((won / total) * 100) : 0;
+
+  // ROI per day for chart
+  const roiByDate = useMemo(() => {
+    const map = new Map<string, { wins: number; losses: number }>();
+    items.forEach((i) => {
+      const key = i.match.date ? i.match.date.slice(0, 10) : "unknown";
+      const entry = map.get(key) || { wins: 0, losses: 0 };
+      if (i.result === "won") entry.wins++;
+      else if (i.result === "lost") entry.losses++;
+      map.set(key, entry);
+    });
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, v]) => ({ date, roi: ((v.wins - v.losses) / Math.max(v.wins + v.losses, 1)) * 100 }));
+  }, [items]);
+
+  // Group by date
+  const dateMap = new Map<string, HistoryEntry[]>();
+  items.forEach((item) => {
+    const dateKey = item.match.date ? item.match.date.slice(0, 10) : "unknown";
+    const entry: HistoryEntry = {
+      id: item.id,
+      date: item.match.date || "",
+      league: item.match.league || "",
+      home: item.match.home || "",
+      away: item.match.away || "",
+      time: item.match.date ? new Date(item.match.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : "",
+      status: mapResultToStatus(item.result),
+      ai_pick: item.prediction || "",
+      odds: item.confidence ? item.confidence / 20 : 1.5,
+      result: undefined,
+      accuracy: item.confidence || undefined,
+      is_analyzed: true,
+    };
+    const existing = dateMap.get(dateKey) || [];
+    existing.push(entry);
+    dateMap.set(dateKey, existing);
+  });
+
+  const groups: DateGroup[] = Array.from(dateMap.entries())
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([date, entries]) => ({
+      label: formatDateLabel(date),
+      entries,
+    }));
 
   return (
     <div className="bg-surface-deep text-on-surface font-body-md antialiased min-h-screen pb-32">
@@ -207,13 +294,13 @@ export default function HistoryPage() {
       </div>
 
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 bg-background border-b border-outline-variant flex justify-between items-center h-14 px-margin-mobile">
+      <header className="fixed top-14 w-full z-50 bg-background border-b border-outline-variant flex justify-between items-center h-14 px-margin-mobile">
         <Link href="/dashboard" className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center border border-primary">
             <User className="w-5 h-5 text-primary" />
           </div>
           <h1 className="font-headline-lg text-headline-lg font-bold text-ia-gold tracking-tight">
-            FASOBET
+            fasobet by ben rachid sawadogo
           </h1>
         </Link>
         <div className="flex items-center gap-2">
@@ -222,33 +309,42 @@ export default function HistoryPage() {
       </header>
 
       {/* Success Rate Summary Sticky */}
-      <section className="mt-14 sticky top-14 z-40 bg-surface-deep/95 backdrop-blur-md border-b border-outline-variant px-margin-mobile py-stack-md">
+      <section className="mt-28 sticky top-28 z-40 bg-surface-deep/95 backdrop-blur-md border-b border-outline-variant px-margin-mobile py-stack-md">
         <div className="flex items-center justify-between gap-gutter">
           <div className="flex flex-col gap-1">
             <span className="font-label-caps text-label-caps text-on-surface-variant opacity-70">
               TAUX DE RÉUSSITE
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="font-stat-value text-stat-value text-ia-gold">78%</span>
+              <span className="font-stat-value text-stat-value text-ia-gold">{winRate}%</span>
               <span className="text-[10px] text-success-green flex items-center gap-0.5">
-                <TrendingUp className="w-3 h-3" /> +2.4%
+                <TrendingUp className="w-3 h-3" /> +{winRate > 50 ? winRate - 50 : 0}%
               </span>
             </div>
           </div>
           <div className="flex items-center gap-gutter">
+            <RoiChart data={roiByDate} />
             <div className="flex flex-col gap-1 text-right">
               <span className="font-label-caps text-label-caps text-on-surface-variant opacity-70">
-                PRÉDICTIONS CE MOIS
+                {competFilter || "PRÉDICTIONS"}
               </span>
-              <span className="font-stat-value text-stat-value text-on-surface">124</span>
+              <span className="font-stat-value text-stat-value text-on-surface">{total}</span>
             </div>
-            <SuccessRing percent={78} />
+            <SuccessRing percent={winRate} />
           </div>
         </div>
       </section>
 
       {/* Prediction History List */}
-      <main className="px-margin-mobile mt-stack-lg space-y-stack-lg">
+      <main className="px-margin-mobile mt-stack-lg space-y-4">
+        {competitions.length > 1 && (
+          <FilterChips leagues={competitions} selected={competFilter} onChange={setCompetFilter} />
+        )}
+        {groups.length === 0 && (
+          <div className="text-center py-12 text-on-surface-variant">
+            Aucune prédiction historique trouvée.
+          </div>
+        )}
         {groups.map((group) => (
           <div key={group.label}>
             {/* Date Header */}
@@ -267,7 +363,7 @@ export default function HistoryPage() {
       </main>
 
       {/* Performance Insights Floating Card */}
-      {showPerformanceCard && (
+      {showPerformanceCard && groups.length > 0 && (
         <div className="fixed bottom-24 left-margin-mobile right-margin-mobile z-40">
           <div className="bg-primary-container border border-primary/40 p-4 shadow-2xl flex items-center gap-4 rounded">
             <div className="p-2 bg-on-primary-fixed-variant rounded-full">
@@ -278,8 +374,8 @@ export default function HistoryPage() {
                 ANALYSE DE PERFORMANCE
               </p>
               <p className="font-body-md text-on-surface text-xs mt-0.5">
-                Votre profitabilité sur les 7 derniers jours est de{" "}
-                <span className="text-ia-gold font-bold">+18.5%</span>.
+                Votre profitabilité sur les {total} prédictions est de{" "}
+                <span className="text-ia-gold font-bold">{winRate}%</span>.
               </p>
             </div>
             <button
@@ -295,36 +391,7 @@ export default function HistoryPage() {
       )}
 
       {/* BottomNavBar */}
-      <nav className="fixed bottom-0 w-full z-50 bg-surface-deep border-t border-outline-variant flex justify-around items-center h-[72px] px-base">
-        <Link
-          href="/dashboard"
-          className="flex flex-col items-center justify-center text-ia-gold gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <ChartBar className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">ANALYSES</span>
-        </Link>
-        <Link
-          href="#"
-          className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <ScrollText className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">COUPON</span>
-        </Link>
-        <Link
-          href="#"
-          className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <Medal className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">PRÉMIUM</span>
-        </Link>
-        <Link
-          href="#"
-          className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <User className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">COMPTE</span>
-        </Link>
-      </nav>
+      <BottomNavBar />
     </div>
   );
 }

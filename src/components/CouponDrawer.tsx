@@ -1,38 +1,44 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   ChevronDown,
   X,
   TrendingUp,
   Zap,
 } from "lucide-react";
-
-// ─── Types ─────────────────────────────────────────────────
-export interface CouponLeg {
-  id: string;
-  league: string;
-  match: string;
-  pick: string;
-  odds: number;
-}
-
-interface CouponDrawerProps {
-  legs: CouponLeg[];
-  onRemove: (id: string) => void;
-  onClear: () => void;
-}
+import { couponStore, type CouponMatch } from "@/lib/coupon-store";
 
 // ─── Component ─────────────────────────────────────────────
-export function CouponDrawer({ legs, onRemove, onClear }: CouponDrawerProps) {
-  const [isOpen, setIsOpen] = useState(true);
+export function CouponDrawer() {
+  const [legs, setLegs] = useState<CouponMatch[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
   const [stake, setStake] = useState(1000);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => setIsClient(true), []);
+
+  useEffect(() => {
+    const update = () => setLegs(couponStore.get())
+    update()
+    window.addEventListener('coupon-updated', update)
+    return () => window.removeEventListener('coupon-updated', update)
+  }, [])
+
+  // Auto-open when first leg is added
+  const prevCountRef = React.useRef(0);
+  useEffect(() => {
+    if (legs.length > 0 && prevCountRef.current === 0) {
+      setIsOpen(true);
+    }
+    prevCountRef.current = legs.length;
+  }, [legs.length]);
 
   const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
 
   const totalOdds = legs.length > 0
     ? legs.reduce((acc, leg) => acc * leg.odds, 1)
-    : 0;
+    : 1;
 
   const potentialGain = Math.floor(stake * totalOdds);
 
@@ -60,7 +66,7 @@ export function CouponDrawer({ legs, onRemove, onClear }: CouponDrawerProps) {
             type="button"
             onClick={toggle}
             className="w-12 h-1 bg-surface-container-highest rounded-full mb-4"
-            aria-label={isOpen ? "Réduire le coupon" : "Ouvrir le coupon"}
+            aria-label={isClient ? (isOpen ? "Réduire le coupon" : "Ouvrir le coupon") : "Ouvrir le coupon"}
           />
           <div className="flex items-center justify-between w-full px-margin-mobile pb-stack-md border-b border-outline-variant/30">
             <div className="flex items-center gap-2">
@@ -75,7 +81,7 @@ export function CouponDrawer({ legs, onRemove, onClear }: CouponDrawerProps) {
               type="button"
               onClick={toggle}
               className="h-touch-target-min w-touch-target-min flex items-center justify-end text-on-surface-variant hover:text-text-primary transition-colors active:scale-95"
-              aria-label={isOpen ? "Fermer le coupon" : "Ouvrir le coupon"}
+              aria-label={isClient ? (isOpen ? "Fermer le coupon" : "Ouvrir le coupon") : "Ouvrir le coupon"}
             >
               <ChevronDown className={`w-6 h-6 transition-transform duration-300 ${isOpen ? "" : "rotate-180"}`} />
             </button>
@@ -105,7 +111,7 @@ export function CouponDrawer({ legs, onRemove, onClear }: CouponDrawerProps) {
 
         {/* Selection List */}
         {legs.length > 0 && (
-          <div className="flex-1 overflow-y-auto hide-scrollbar px-margin-mobile py-stack-md space-y-stack-md">
+          <div className="flex-1 overflow-y-auto no-scrollbar px-margin-mobile py-stack-md space-y-stack-md">
             {legs.map((leg) => (
               <div
                 key={leg.id}
@@ -114,15 +120,15 @@ export function CouponDrawer({ legs, onRemove, onClear }: CouponDrawerProps) {
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
                     <p className="font-label-caps text-label-caps text-text-secondary uppercase">
-                      {leg.league}
+                      {leg.competition}
                     </p>
-                    <p className="font-body-lg text-body-lg text-text-primary">{leg.match}</p>
+                    <p className="font-body-lg text-body-lg text-text-primary">{leg.homeTeam} vs {leg.awayTeam}</p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => onRemove(leg.id)}
+                    onClick={() => couponStore.remove(leg.id)}
                     className="text-on-surface-variant hover:text-error transition-colors p-1"
-                    aria-label={`Retirer ${leg.match} du coupon`}
+                    aria-label={`Retirer ${leg.homeTeam} vs ${leg.awayTeam} du coupon`}
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -131,7 +137,7 @@ export function CouponDrawer({ legs, onRemove, onClear }: CouponDrawerProps) {
                   <div className="flex flex-col">
                     <span className="font-label-caps text-label-caps text-ia-gold">IA PICK</span>
                     <div className="flex items-center gap-1">
-                      <span className="font-body-md text-body-md text-text-primary">{leg.pick}</span>
+                      <span className="font-body-md text-body-md text-text-primary">{leg.prediction}</span>
                     </div>
                   </div>
                   <div className="bg-surface-container-high px-3 py-1 border border-outline-variant rounded">
@@ -158,10 +164,10 @@ export function CouponDrawer({ legs, onRemove, onClear }: CouponDrawerProps) {
               </div>
               <div className="flex flex-col items-end">
                 <span className="font-label-caps text-label-caps text-text-secondary text-right uppercase">
-                  Gains Potentiels (1 000F)
+                  Gains Potentiels (1 000F)
                 </span>
                 <span className="font-stat-value text-stat-value text-ia-gold">
-                  {potentialGain.toLocaleString("fr-FR")} FCFA
+                  {isClient ? potentialGain.toLocaleString("fr-FR") : potentialGain.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} FCFA
                 </span>
               </div>
             </div>
@@ -170,7 +176,7 @@ export function CouponDrawer({ legs, onRemove, onClear }: CouponDrawerProps) {
             <div className="flex items-center justify-between bg-surface-raised border border-outline-variant px-4 py-2 rounded">
               <span className="font-body-md text-body-md text-text-secondary">Mise:</span>
               <div className="flex items-center gap-2">
-                <span className="font-headline-sm text-headline-sm text-text-primary">1 000</span>
+                <span className="font-headline-sm text-headline-sm text-text-primary">1 000</span>
                 <span className="font-label-caps text-label-caps text-text-secondary">FCFA</span>
               </div>
             </div>
@@ -180,7 +186,7 @@ export function CouponDrawer({ legs, onRemove, onClear }: CouponDrawerProps) {
               <button
                 type="button"
                 className="flex-1 h-touch-target-min bg-primary-container text-text-primary font-label-caps text-label-caps rounded flex items-center justify-center gap-2 hover:bg-ia-gold hover:text-surface-deep transition-all active:scale-[0.98]"
-                onClick={() => window.open("https://1xbet.com", "_blank", "noopener")}
+                onClick={() => window.open("https://1xbet.com/fr/live/", "_blank", "noopener")}
               >
                 PARIER SUR 1XBET
                 <TrendingUp className="w-[18px] h-[18px]" />
@@ -198,7 +204,7 @@ export function CouponDrawer({ legs, onRemove, onClear }: CouponDrawerProps) {
             {/* Clear button */}
             <button
               type="button"
-              onClick={onClear}
+              onClick={() => couponStore.clear()}
               className="w-full text-center text-[10px] font-label-caps text-on-surface-variant/40 hover:text-error transition-colors py-1"
             >
               VIDER LE COUPON

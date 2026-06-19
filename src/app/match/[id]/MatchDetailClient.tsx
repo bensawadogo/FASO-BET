@@ -11,16 +11,14 @@ import {
   Lightbulb,
   CheckCircle2,
   AlertTriangle,
-  ChartBar,
-  ScrollText,
-  Medal,
-  User,
   ArrowLeft,
   MapPin,
   ExternalLink,
 } from "lucide-react";
 import { MatchActions } from "@/components/match/MatchActions";
 import { TeamLogo } from "@/components/ui/TeamLogo";
+import { BottomNavBar } from "@/components/ui/BottomNavBar";
+import { getMockMatchDetail, MatchDetail } from "@/lib/match-mock";
 
 // ─── Types (exportés pour page.tsx) ───────────────────────
 export interface AgentInsight {
@@ -34,59 +32,6 @@ export interface H2HRow {
   score: string;
   date: string;
   winner?: "home" | "away" | "draw";
-}
-
-export interface MatchDetail {
-  match_id: string;
-  home: string;
-  away: string;
-  competition: string;
-  date: string;
-  venue: string;
-  home_logo?: string;
-  away_logo?: string;
-  prediction: string;
-  confidence: number;
-  stability: string;
-  volatility: string;
-  risk: string;
-  prob_home: number;
-  prob_draw: number;
-  prob_away: number;
-  reasons: string[];
-  agent_insights: AgentInsight[];
-  h2h?: H2HRow[];
-}
-
-// ─── Données mock de développement ────────────────────────
-export function getMockMatchDetail(matchId: string): MatchDetail {
-  return {
-    match_id: matchId,
-    home: "ASFA Yennenga",
-    away: "Wydad AC",
-    competition: "Ligue 1 Burkina",
-    date: new Date().toISOString(),
-    venue: "Stade du 4-Août, Ouagadougou",
-    prediction: "1",
-    confidence: 82,
-    stability: "HAUTE",
-    volatility: "FAIBLE",
-    risk: "MODÉRÉ",
-    prob_home: 52,
-    prob_draw: 23,
-    prob_away: 25,
-    reasons: [
-      "Domination à domicile constante (85% win rate local)",
-      "Effectif complet, aucun blessé majeur signalé",
-      "Faiblesse défensive adverse sur les balles arrêtées",
-    ],
-    agent_insights: [
-      { agent: "collector", title: "COLLECTOR", text: "Terrain sec, température 31°C. ASFA affiche une forme physique de 92% suite aux sessions de récupération optimisées." },
-      { agent: "statistician", title: "STATISTICIAN", text: "Historique H2H (5 derniers matchs): 3W - 1D - 1L. Domination historique marquée sur ce terrain spécifique." },
-      { agent: "strategist", title: "STRATEGIST", text: "Victoire à domicile hautement probable. Alignement tactique 4-3-3 favorisant la possession contre le bloc bas de Wydad." },
-    ],
-    h2h: [],
-  };
 }
 
 // ─── Confidence Ring ───────────────────────────────────────
@@ -162,6 +107,9 @@ interface MatchDetailClientProps {
 
 export function MatchDetailClient({ matchId, initialData }: MatchDetailClientProps) {
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => setIsClient(true), []);
 
   // Fallback dev : données mock si API indisponible
   const detail: MatchDetail = initialData ?? getMockMatchDetail(matchId);
@@ -175,11 +123,16 @@ export function MatchDetailClient({ matchId, initialData }: MatchDetailClientPro
         { match: `${detail.home} vs ${detail.away}`, score: "1-3", date: "15/03/2024", winner: "away" },
       ];
 
-  const timeStr = new Date(detail.date).toLocaleTimeString("fr-FR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
+  const timeStr = isClient
+    ? new Date(detail.date).toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZoneName: "short",
+      })
+    : new Date(detail.date).toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 
   const agentConfig: Record<AgentInsight["agent"], { border: string; titleColor: string; icon: React.ReactNode }> = {
     collector: { border: "border-l-2 border-primary", titleColor: "text-primary", icon: <TrendingUp className="w-4 h-4 text-primary" /> },
@@ -205,7 +158,7 @@ export function MatchDetailClient({ matchId, initialData }: MatchDetailClientPro
         <section className="py-stack-lg border-b border-outline-variant">
           <div className="flex justify-between items-center mb-stack-md">
             <div className="flex flex-col items-center gap-2 flex-1">
-              <TeamLogo src={detail.home_logo} alt={detail.home} size={64} />
+              <TeamLogo teamName={detail.home} size={64} />
               <span className="font-headline-sm text-headline-sm text-center text-text-primary">{detail.home}</span>
             </div>
             <div className="flex flex-col items-center justify-center gap-1 flex-none px-stack-lg">
@@ -214,7 +167,7 @@ export function MatchDetailClient({ matchId, initialData }: MatchDetailClientPro
               <span className="font-label-caps text-label-caps text-on-surface-variant">AUJOURD&apos;HUI</span>
             </div>
             <div className="flex flex-col items-center gap-2 flex-1">
-              <TeamLogo src={detail.away_logo} alt={detail.away} size={64} />
+              <TeamLogo teamName={detail.away} size={64} />
               <span className="font-headline-sm text-headline-sm text-center text-text-primary">{detail.away}</span>
             </div>
           </div>
@@ -340,7 +293,7 @@ export function MatchDetailClient({ matchId, initialData }: MatchDetailClientPro
             />
             <button
               type="button"
-              onClick={() => window.open("https://1xbet.com", "_blank", "noopener")}
+              onClick={() => window.open("https://1xbet.com/fr/live/", "_blank", "noopener")}
               className="flex-1 h-touch-target-min bg-ia-gold text-surface-deep font-label-caps text-label-caps rounded-lg flex items-center justify-center gap-base active:scale-95 transition-transform uppercase"
             >
               Parier sur 1xBet
@@ -351,12 +304,7 @@ export function MatchDetailClient({ matchId, initialData }: MatchDetailClientPro
       </main>
 
       {/* BottomNavBar — C7/C11 */}
-      <nav className="fixed bottom-0 w-full z-50 bg-surface-deep border-t border-outline-variant flex justify-around items-center h-[72px] px-base">
-        <Link href="/dashboard" className="flex flex-col items-center justify-center text-ia-gold gap-1"><ChartBar className="w-6 h-6" /><span className="font-label-caps text-[10px] uppercase">ANALYSES</span></Link>
-        <Link href="/coupon" className="flex flex-col items-center justify-center text-on-surface-variant gap-1"><ScrollText className="w-6 h-6" /><span className="font-label-caps text-[10px] uppercase">COUPON</span></Link>
-        <Link href="/premium" className="flex flex-col items-center justify-center text-on-surface-variant gap-1"><Medal className="w-6 h-6" /><span className="font-label-caps text-[10px] uppercase">PRÉMIUM</span></Link>
-        <Link href="/profile" className="flex flex-col items-center justify-center text-on-surface-variant gap-1"><User className="w-6 h-6" /><span className="font-label-caps text-[10px] uppercase">COMPTE</span></Link>
-      </nav>
+      <BottomNavBar />
     </div>
   );
 }

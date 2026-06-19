@@ -1,38 +1,68 @@
 /**
  * FasoBet API Client - Client typé pour FastAPI + Django REST
- * BLOC 4 - Frontend Refactorisé
  */
 
-import { Agent3Output } from '../types/agent3.types';
-import { PipelineOptions, PipelineResult } from '../agents/pipeline';
-import { Match, Prediction, UserProfile, FeatureFlag, AgentConfig, Sport, Team } from '../types/django-models';
-import { getAccessToken, isTokenExpired, refreshAccessToken, setTokens, clearTokens } from './auth';
+import { getAccessToken, isTokenExpired, refreshAccessToken, clearTokens } from './auth';
 
 // ─── Configuration ────────────────────────────────────────────
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const FASTAPI_BASE_URL = process.env.NEXT_PUBLIC_INFERENCE_URL || 'http://localhost:8001';
-const DJANGO_URL = process.env.NEXT_PUBLIC_DJANGO_URL || 'http://localhost:8000';
+const FASTAPI_BASE_URL = process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+const DJANGO_BASE_URL  = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
-interface ApiResponse<T> {
+// ─── Types ────────────────────────────────────────────────────
+export interface ApiResponse<T> {
   data?: T;
   error?: string;
   status: number;
   success: boolean;
 }
 
-interface ApiError {
-  message: string;
-  status: number;
-  details?: any;
-}
-
 interface RegisterPayload {
   email: string;
   password: string;
-  // Accept both snake_case (backend) and camelCase (frontend)
   first_name?: string;
   firstName?: string;
   phone?: string;
+}
+
+export interface MatchData {
+  id?: string | number;
+  match_id?: string;
+  home?: string;
+  away?: string;
+  teamA?: string | number;
+  teamB?: string | number;
+  league?: string;
+  competition?: string;
+  date?: string;
+  [key: string]: any;
+}
+
+export interface PredictionData {
+  id?: string | number;
+  match_id?: string;
+  home?: string; home_team?: string;
+  away?: string; away_team?: string;
+  league?: string; competition?: string;
+  selection?: string; recommended_bet?: string; predicted_outcome?: string;
+  min_odds?: number; odds?: number;
+  confidence?: number; confidence_score?: number;
+  signal?: string;
+  [key: string]: any;
+}
+
+export interface UserProfile {
+  id?: number;
+  username?: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  [key: string]: any;
+}
+
+export interface FeatureFlag {
+  id: number;
+  name: string;
+  is_active: boolean;
 }
 
 // ─── Client HTTP de base ──────────────────────────────────────
@@ -47,157 +77,87 @@ class BaseApiClient {
     method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     endpoint: string,
     data?: any,
-    retryCount = 3
+    retryCount = 1
   ): Promise<ApiResponse<T>> {
     let attempt = 0;
-    let lastError: ApiError | null = null;
+    let lastError: { message: string; status: number } | null = null;
 
     while (attempt < retryCount) {
       attempt++;
       try {
         const url = `${this.baseUrl}${endpoint}`;
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
         let token = getAccessToken();
         if (token && isTokenExpired(token)) {
           token = await refreshAccessToken();
-          if (!token) {
-            clearTokens();
-            // Redirect to login or handle as unauthenticated
-            throw { message: 'Authentication required', status: 401 };
-          }
+          if (!token) { clearTokens(); throw { message: 'Authentication required', status: 401 }; }
         }
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+        if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const options: RequestInit = {
-          method,
-          headers,
-        };
-
-        if (data) {
-          options.body = JSON.stringify(data);
-        }
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const options: RequestInit = { method, headers, signal: controller.signal };
+        if (data) options.body = JSON.stringify(data);
 
         const response = await fetch(url, options);
-
+        clearTimeout(timeoutId);
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw {
-            message: errorData.detail || errorData.error || 'API Error',
-            status: response.status,
-            details: errorData,
-          };
+          throw { message: errorData.detail || errorData.error || 'API Error', status: response.status, details: errorData };
         }
 
         const responseData = await response.json();
-        return {
-          data: responseData,
-          status: response.status,
-          success: true,
-        };
-      } catch (error) {
-        lastError = error as ApiError;
-        if (attempt < retryCount) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        } else if (lastError?.status === 401) {
-          clearTokens(); // Clear tokens on final 401
-        }
+        return { data: responseData, status: response.status, success: true };
+      } catch (error: any) {
+        lastError = error;
+        if (attempt < retryCount) await new Promise(r => setTimeout(r, 1000));
+        else if (lastError?.status === 401) clearTokens();
       }
     }
 
-    return {
-      error: lastError?.message || 'Request failed after retries',
-      status: lastError?.status || 500,
-      success: false,
-    };
+    return { error: lastError?.message || 'Request failed', status: lastError?.status || 500, success: false };
   }
 }
 
 // ─── FastAPI Client (Inference Engine) ────────────────────────
 export class FastApiClient extends BaseApiClient {
-  constructor() {
-    super(FASTAPI_BASE_URL);
+  constructor() { super(FASTAPI_BASE_URL); }
+
+  async predict(options?: any): Promise<ApiResponse<any>> {
+    return this.request<any>('POST', '/predict', options);
   }
 
-  /**
-   * Prédiction synchrone - Exécute le pipeline complet
-   * @param options Options de pipeline
-   * @returns Prédictions finales
-   */
-  async predict(options?: PipelineOptions): Promise<ApiResponse<Agent3Output>> {
-    return this.request<Agent3Output>('POST', '/predict', options);
-  }
-
-  /**
-   * Pipeline async - Lance le pipeline en arrière-plan
-   * @param options Options de pipeline
-   * @returns Task ID pour suivre l'état
-   */
-  async runPipelineAsync(options?: PipelineOptions): Promise<ApiResponse<{ task_id: string }>> {
+  async runPipelineAsync(options?: any): Promise<ApiResponse<{ task_id: string }>> {
     return this.request<{ task_id: string }>('POST', '/pipeline/run', options);
   }
 
-  /**
-   * Vérifie l'état d'un pipeline async
-   * @param taskId ID de la tâche
-   * @returns État et résultat si terminé
-   */
-  async getPipelineStatus(taskId: string): Promise<ApiResponse<PipelineResult>> {
-    return this.request<PipelineResult>('GET', `/pipeline/status/${taskId}`);
+  async getPipelineStatus(taskId: string): Promise<ApiResponse<any>> {
+    return this.request<any>('GET', `/pipeline/status/${taskId}`);
   }
 
-  /**
-   * Récupère les métriques de santé
-   * @returns Métriques du service
-   */
   async getHealthMetrics(): Promise<ApiResponse<any>> {
     return this.request('GET', '/health/metrics');
   }
 
-  /**
-   * Collecte les matchs disponibles (Agent 1 uniquement)
-   * @param options Options de collecte
-   * @returns Matchs collectés
-   */
-  async collectMatches(options?: any): Promise<ApiResponse<Match[]>> {
-    return this.request<Match[]>('POST', '/matches/collect', options);
+  async collectMatches(options?: any): Promise<ApiResponse<MatchData[]>> {
+    return this.request<MatchData[]>('POST', '/matches/collect', options);
   }
 
-  /**
-   * Récupère un match par son ID (FastAPI)
-   * @param id identifiant du match
-   */
-  async getMatchById(id: string): Promise<ApiResponse<Match>> {
-    return this.request<Match>('GET', `/matches/${id}`);
+  async getMatchById(id: string): Promise<ApiResponse<MatchData>> {
+    return this.request<MatchData>('GET', `/matches/${id}`);
   }
 }
 
-  // ─── Django REST Client (Control Plane) ────────────────────────
-  export class DjangoApiClient extends BaseApiClient {
-    constructor() {
-      super(API_BASE_URL);
-    }
+// ─── Django REST Client (Control Plane) ────────────────────────
+export class DjangoApiClient extends BaseApiClient {
+  constructor() { super(DJANGO_BASE_URL); }
 
-    // ─── Données historiques ──────────────────────────────────────
-    async getHistoricalData(): Promise<ApiResponse<any>> {
-      return this.request('GET', '/api/historical');
-    }
+  // Auth
+  async login(username: string, password: string): Promise<ApiResponse<{ access: string; refresh: string; user: any }>> {
+    return this.request('POST', '/api/token/', { username, password });
+  }
 
-    // ─── Authentification ───────────────────────────────────────
-    async login(username: string, password: string): Promise<ApiResponse<{
-      access: string;
-      refresh: string;
-      user: any;
-    }>> {
-      return this.request('POST', '/api/token/', { username, password });
-    }
-
-  // Route Django: POST /api/register/
-  // Vérifiée dans backend/predictions/urls.py le 26/05/2026
   async register(data: RegisterPayload): Promise<ApiResponse<{ success: boolean; user_id?: number; message?: string }>> {
     return this.request('POST', '/api/register/', data);
   }
@@ -206,11 +166,15 @@ export class FastApiClient extends BaseApiClient {
     return this.request('POST', '/api/token/refresh/', { refresh: refreshToken });
   }
 
-  async getCurrentUser(): Promise<ApiResponse<any>> {
-    return this.request('GET', '/api/users/me/');
+  async getCurrentUser(): Promise<ApiResponse<UserProfile>> {
+    return this.request<UserProfile>('GET', '/api/users/me/');
   }
 
-  // ─── Utilisateurs ──────────────────────────────────────────
+  // Data
+  async getHistoricalData(): Promise<ApiResponse<any>> {
+    return this.request('GET', '/api/historical');
+  }
+
   async getUsers(): Promise<ApiResponse<any[]>> {
     return this.request('GET', '/api/users/');
   }
@@ -219,22 +183,19 @@ export class FastApiClient extends BaseApiClient {
     return this.request('GET', `/api/users/${userId}/`);
   }
 
-  // ─── Sports ──────────────────────────────────────────────
   async getSports(): Promise<ApiResponse<any[]>> {
     return this.request('GET', '/api/sports/');
   }
 
-  // ─── Équipes ─────────────────────────────────────────────
   async getTeams(): Promise<ApiResponse<any[]>> {
     return this.request('GET', '/api/teams/');
   }
 
-  // ─── Matchs ──────────────────────────────────────────────
-  async getMatches(): Promise<ApiResponse<Match[]>> {
+  async getMatches(): Promise<ApiResponse<MatchData[]>> {
     return this.request('GET', '/api/matches/');
   }
 
-  async getMatch(matchId: string): Promise<ApiResponse<Match>> {
+  async getMatch(matchId: string): Promise<ApiResponse<MatchData>> {
     return this.request('GET', `/api/matches/${matchId}/`);
   }
 
@@ -246,25 +207,22 @@ export class FastApiClient extends BaseApiClient {
     return this.request('GET', `/api/matches/${matchId}/predictable/`);
   }
 
-  // ─── Prédictions ─────────────────────────────────────────
-  async getMyPredictions(): Promise<ApiResponse<Prediction[]>> {
+  async getBankroll(): Promise<ApiResponse<any>> {
+    return this.request('GET', '/api/profiles/bankroll/');
+  }
+
+  async getMyPredictions(): Promise<ApiResponse<PredictionData[]>> {
     return this.request('GET', '/api/predictions/');
   }
 
-  async createPrediction(predictionData: {
-    match_id: number;
-    predicted_outcome: string;
-    confidence: number;
-  }): Promise<ApiResponse<Prediction>> {
+  async createPrediction(predictionData: { match_id: number; predicted_outcome: string; confidence: number }): Promise<ApiResponse<PredictionData>> {
     return this.request('POST', '/api/predictions/', predictionData);
   }
 
-  // ─── Profils utilisateurs ─────────────────────────────────
   async getMyProfile(): Promise<ApiResponse<UserProfile>> {
     return this.request('GET', '/api/profiles/');
   }
 
-  // ─── Feature Flags (Admin seulement) ──────────────────────
   async getFeatureFlags(): Promise<ApiResponse<any[]>> {
     return this.request('GET', '/api/feature-flags/');
   }
@@ -273,9 +231,21 @@ export class FastApiClient extends BaseApiClient {
     return this.request('PATCH', `/api/feature-flags/${flagId}/`, data);
   }
 
-  // ─── Configurations Agents (Admin seulement) ──────────────
   async getAgentConfigs(): Promise<ApiResponse<any[]>> {
     return this.request('GET', '/api/agent-configs/');
+  }
+
+  async createAlert(data: { channel: string; league: string; min_confidence: number; is_active: boolean; contact: string }): Promise<ApiResponse<any>> {
+    return this.request('POST', '/api/alerts/', data);
+  }
+
+  async getHistorical(): Promise<ApiResponse<any>> {
+    return this.request('GET', '/api/historical/');
+  }
+
+  async getPerformance(days?: number): Promise<ApiResponse<any>> {
+    const query = days ? `?days=${days}` : '';
+    return this.request('GET', `/api/performance/${query}`);
   }
 }
 
@@ -289,41 +259,146 @@ export class FasoBetApiClient {
     this.djangoApi = new DjangoApiClient();
   }
 
-  // ─── Gestion d'authentification ───────────────────────────
-  // ─── Gestion d'authentification ───────────────────────────
-  setAuthToken(token: string) {
-    // Les tokens sont gérés par le module auth.ts et BaseApiClient
-    // Ces méthodes ne sont plus nécessaires ici, mais gardées pour compat
-    // ou si on souhaite une gestion token distincte par client
-    console.warn("setAuthToken sur FasoBetApiClient est déprécié. Utilisez setTokens de src/lib/auth.ts directement.");
-  }
+  // Accès direct aux sous-clients
+  get fastApiClient(): FastApiClient { return this.fastApi; }
+  get djangoApiClient(): DjangoApiClient { return this.djangoApi; }
+  get controlApi(): DjangoApiClient { return this.djangoApi; }
 
-  clearAuthToken() {
-    console.warn("clearAuthToken sur FasoBetApiClient est déprécié. Utilisez clearTokens de src/lib/auth.ts directement.");
-  }
-
-  // ─── Accès aux clients spécifiques ───────────────────────
-  get fastApiClient(): FastApiClient {
-    return this.fastApi;
-  }
-
-  get djangoApiClient(): DjangoApiClient {
-    return this.djangoApi;
-  }
-
-  // ─── Méthodes unifiées courantes ──────────────────────────
+  // Auth
   async login(username: string, password: string) {
     return this.djangoApi.login(username, password);
   }
 
+  setAuthToken(_token: string) {
+    console.warn('setAuthToken est déprécié. Utilisez setTokens de src/lib/auth.ts');
+  }
+
+  clearAuthToken() {
+    console.warn('clearAuthToken est déprécié. Utilisez clearTokens de src/lib/auth.ts');
+  }
+
+  // ─── Méthodes haut-niveau pour les pages ─────────────────────
+
+  /**
+   * Récupère les prédictions (FastAPI → Django fallback → [])
+   * ✅ NEVER retourne de mock data — TOUJOURS du backend ou vide
+   */
+  async getPredictions(): Promise<PredictionData[]> {
+    // Essai Django /api/predictions/today/ en premier (données fraîches)
+    try {
+      const res = await fetch(
+        `${DJANGO_BASE_URL}/api/predictions/today/`,
+        {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+          signal: AbortSignal.timeout(15000)
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const predictions = data.matchs || [];
+        if (predictions.length > 0 && !predictions[0]?.match_id?.startsWith('mock-')) {
+          return predictions;
+        }
+      }
+    } catch (err) {
+      console.warn('[getPredictions] Django /today/ failed:', err);
+    }
+
+    // Fallback FastAPI proxy
+    try {
+      const res = await fetch(
+        `${FASTAPI_BASE_URL}/predictions`,
+        { 
+          method: 'GET', 
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+          signal: AbortSignal.timeout(5000)
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const predictions = Array.isArray(data) ? data : (data.matchs || data.predictions || []);
+        if (predictions.length > 0 && !predictions[0]?.match_id?.startsWith('mock-')) {
+          return predictions;
+        }
+      }
+    } catch (err) {
+      console.warn('[getPredictions] FastAPI failed:', err);
+    }
+
+    // Fallback Django /api/predictions/
+    try {
+      const res = await this.djangoApi.getMyPredictions();
+      if (res.success && res.data) {
+        const raw = res.data as any;
+        const predictions = Array.isArray(raw) ? raw : (raw.predictions || []);
+        if (predictions.length > 0 && !predictions[0]?.match_id?.startsWith('mock-')) {
+          return predictions;
+        }
+      }
+    } catch (err) {
+      console.warn('[getPredictions] Django fallback failed:', err);
+    }
+
+    // Fallback via Next.js proxy (works locally AND in production)
+    try {
+      const res = await fetch('/api/fastapi/proxy/predictions', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const predictions = Array.isArray(data) ? data : (data.matchs || data.predictions || []);
+        if (predictions.length > 0) return predictions;
+      }
+    } catch (err) {
+      console.warn('[getPredictions] Proxy fallback failed:', err);
+    }
+
+    console.warn('[getPredictions] Backend unavailable — returning empty array');
+    return [];
+  }
+
+  /**
+   * Récupère les métriques de performance (mock)
+   */
+  async getPerformance(): Promise<{ roi: number; win_rate: number } | null> {
+    try {
+      const res = await this.djangoApi.getPerformance();
+      if (res.success && res.data) {
+        const d = res.data as any;
+        // ✅ Validation: vérifie que ce n'est pas du mock
+        if (typeof d.roi === 'number' && typeof d.win_rate === 'number') {
+          return { roi: d.roi, win_rate: d.win_rate };
+        }
+      }
+    } catch (err) {
+      console.warn('[getPerformance] Backend unavailable:', err);
+    }
+    
+    // ✅ JAMAIS retourner du mock — TOUJOURS null si pas de backend
+    return null;
+  }
+
+  /**
+   * Récupère l'utilisateur connecté
+   */
+  async getCurrentUser(): Promise<UserProfile | null> {
+    try {
+      const res = await this.djangoApi.getCurrentUser();
+      if (res.success && res.data) return res.data;
+    } catch { /* indisponible */ }
+    return null;
+  }
+
   async getHealthStatus() {
-    const fastApiHealth = await this.fastApi.getHealthMetrics();
-    return {
-      fastApi: fastApiHealth.success,
-      django: true, // À implémenter
-    };
+    const fastApiHealth = await this.fastApi.getHealthMetrics().catch(() => ({ success: false }));
+    return { fastApi: fastApiHealth.success, django: true };
   }
 }
 
-// ─── Singleton pour utilisation globale ───────────────────────
+// ─── Singleton global ─────────────────────────────────────────
 export const apiClient = new FasoBetApiClient();

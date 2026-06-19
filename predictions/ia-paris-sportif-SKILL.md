@@ -1,3 +1,10 @@
+---
+name: ia-paris-sportif
+description: Skill de prédiction football pour les paris sportifs.
+version: 1.0.0
+status: installed
+---
+
 # ⚽ IA Paris Sportif — SKILL
 
 ## 🎯 Description

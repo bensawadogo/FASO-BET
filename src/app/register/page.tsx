@@ -11,6 +11,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
+import { setTokens } from "@/lib/auth";
 
 interface FormData {
   first_name: string;
@@ -89,16 +90,20 @@ export default function RegisterPage() {
 
       try {
         const response = await apiClient.djangoApiClient.register({
-          first_name: form.first_name.trim(),
+          firstName: form.first_name.trim(),
           email: form.email.trim(),
           phone: form.phone.trim(),
           password: form.password,
         });
 
         if (response.success) {
+          const data = response as any
+          const token = data.data?.token || data.data?.access
+          const refresh = data.data?.refresh || ""
+          if (token) setTokens(token, refresh)
           setStatus("success");
           setTimeout(() => {
-            router.push("/login");
+            window.location.href = "/";
           }, 1500);
         } else {
           setStatus("error");
@@ -128,7 +133,7 @@ export default function RegisterPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <span className="text-ia-gold font-headline-sm font-bold tracking-tighter">
-          FASOBET
+          fasobet by ben rachid sawadogo
         </span>
         <div className="w-10" />
       </header>

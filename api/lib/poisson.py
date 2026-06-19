@@ -1,8 +1,6 @@
 """FasoBet - Poisson distribution math (BLOC 2)
-Équivalent Python de src/lib/poisson.ts
-
-Calcule les probabilités de score à partir des lambdas (xG attendus).
-Méthode : Distribution de Poisson pour modéliser les buts marqués.
+SOURCE DE VÉRITÉ pour les calculs de distribution de Poisson.
+La version TypeScript (src/lib/poisson.ts) est un miroir et doit rester alignée.
 """
 
 from __future__ import annotations
@@ -15,7 +13,7 @@ MAX_GOALS = 10
 
 def poisson_pmf(k: int, lam: float) -> float:
     """Probabilité d'exactement k buts avec une moyenne lam (xG)."""
-    return (math.e ** -lam) * (lam ** k) / math.factorial(k)
+    return math.exp(-lam) * (lam ** k) / math.factorial(k)
 
 
 def compute_lambdas(
@@ -96,3 +94,50 @@ def prob_btts(lambda_home: float, lambda_away: float) -> float:
             if i > 0 and j > 0:
                 prob += poisson_pmf(i, lambda_home) * poisson_pmf(j, lambda_away)
     return min(1.0, prob)
+
+def compute_over_under(lambda_home: float, lambda_away: float,
+                        threshold: float) -> dict:
+    """Retourne P(total buts > threshold) et P(total buts < threshold)."""
+    max_goals = 10
+    p_over = 0.0
+    for h in range(max_goals):
+        for a in range(max_goals):
+            if h + a > threshold:
+                p_over += (poisson_pmf(h, lambda_home) *
+                          poisson_pmf(a, lambda_away))
+    return {
+        "over": round(p_over, 4),
+        "under": round(1 - p_over, 4)
+    }
+
+def compute_double_chance(prob_home: float, prob_draw: float,
+                           prob_away: float) -> dict:
+    """Double chance derive directement du 1X2."""
+    return {
+        "1X": round(prob_home + prob_draw, 4),
+        "12": round(prob_home + prob_away, 4),
+        "X2": round(prob_draw + prob_away, 4)
+    }
+
+def compute_draw_no_bet(prob_home: float, prob_away: float) -> dict:
+    """Renormalise HOME/AWAY sans le DRAW."""
+    total = prob_home + prob_away
+    if total == 0:
+        return {"home": 0.5, "away": 0.5}
+    return {
+        "home": round(prob_home / total, 4),
+        "away": round(prob_away / total, 4)
+    }
+
+def compute_top_scores(lambda_home: float, lambda_away: float,
+                        top_n: int = 3) -> list:
+    """Retourne les top_n scores exacts les plus probables."""
+    max_goals = 6
+    scores = []
+    for h in range(max_goals):
+        for a in range(max_goals):
+            p = (poisson_pmf(h, lambda_home) *
+                 poisson_pmf(a, lambda_away))
+            scores.append({"score": f"{h}-{a}", "probability": round(p, 4)})
+    scores.sort(key=lambda x: x["probability"], reverse=True)
+    return scores[:top_n]

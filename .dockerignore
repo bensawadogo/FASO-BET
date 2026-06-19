@@ -1,16 +1,66 @@
-node_modules/
-.next/
-__pycache__/
-*.pyc
-.env
-.env.local
-.git/
+# Git
+.git
 .gitignore
-*.md
-data/
-nerdytips-data/
-predictions/
-.vscode/
+.github
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.pytest_cache
+.venv
+.env.local
+.env.*.local
+venv/
+
+# Build
+.nuxt
+dist
+build
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+*.test.js
+*.spec.js
+test/
+tests/
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+logs/
 *.log
-db.sqlite3
-staticfiles/
+
+# Misc
+.env.example
+.env.local.example
+README.md
+AUDIT*.md
+implementation_plan.md
+docker-compose.test.yml
+Makefile
+
+# Data
+nerdytips-data/
+data/
+backup.sh
+rebuild_logos.py
+check_missing_logos.py

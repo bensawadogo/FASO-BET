@@ -1,6 +1,13 @@
+/**
+ * SERVER-ONLY — Ne jamais importer dans un Client Component.
+ * Utilise `fs` et `@anthropic-ai/sdk` (disponible uniquement côté serveur).
+ */
 import Anthropic from "@anthropic-ai/sdk";
-import { readFileSync } from "fs";
-import { join } from "path";
+import { loadFootballSkill } from "./skills-loader";
+
+if (typeof window !== 'undefined') {
+  throw new Error('anthropic.ts is server-only — do not import in Client Components');
+}
 
 let client: Anthropic | null = null;
 
@@ -9,15 +16,6 @@ export function getAnthropicClient(): Anthropic | null {
   if (!key) return null;
   if (!client) client = new Anthropic({ apiKey: key });
   return client;
-}
-
-export function loadFootballSkill(): string {
-  try {
-    const path = join(process.cwd(), "src", "skills", "football-prediction.md");
-    return readFileSync(path, "utf-8");
-  } catch {
-    return "Suivre la méthodologie Poisson, score composite et value bet.";
-  }
 }
 
 export async function callClaudeJSON<T>(

@@ -7,12 +7,10 @@ import {
   ArrowLeft,
   Info,
   CheckCircle2,
-  BarChart3,
-  ScrollText,
-  Medal,
-  User,
   Save,
 } from "lucide-react";
+import { BottomNavBar } from "@/components/ui/BottomNavBar";
+import { ToggleSwitch } from "@/components/ToggleSwitch";
 
 // ─── Types ─────────────────────────────────────────────────
 interface League {
@@ -30,38 +28,6 @@ interface ToggleSetting {
 interface BetType {
   label: string;
   checked: boolean;
-}
-
-// ─── Toggle Component ─────────────────────────────────────
-function ToggleSwitch({
-  checked,
-  onChange,
-  label,
-  ariaLabel,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-  ariaLabel: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={ariaLabel}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-12 items-center rounded-full transition-all duration-300 ${
-        checked ? "bg-primary-container" : "bg-surface-container-highest"
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 rounded-full transition-transform duration-300 ${
-          checked ? "translate-x-7 bg-primary" : "translate-x-1 bg-outline"
-        }`}
-      />
-    </button>
-  );
 }
 
 // ─── Main Page ─────────────────────────────────────────────
@@ -134,7 +100,7 @@ export default function SettingsPage() {
       dailyReport,
     };
     if (typeof window !== "undefined") {
-      localStorage.setItem("fasobet_settings", JSON.stringify(config));
+      localStorage.setItem("fasobet by ben rachid sawadogo_settings", JSON.stringify(config));
     }
     router.back();
   };
@@ -161,7 +127,7 @@ export default function SettingsPage() {
         </span>
       </header>
 
-      <main className="pt-20 pb-8 px-margin-mobile max-w-2xl mx-auto space-y-stack-lg">
+      <main className="pt-20 pb-8 px-margin-mobile max-w-2xl mx-auto space-y-4">
         {/* Préférences de Calcul */}
         <section className="space-y-stack-md">
           <h2 className="font-label-caps text-label-caps text-outline uppercase tracking-widest">
@@ -352,36 +318,7 @@ export default function SettingsPage() {
       </main>
 
       {/* BottomNavBar */}
-      <nav className="fixed bottom-0 w-full z-50 bg-surface-deep border-t border-outline-variant flex justify-around items-center h-[72px] px-base">
-        <Link
-          href="/dashboard"
-          className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <BarChart3 className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">ANALYSES</span>
-        </Link>
-        <Link
-          href="#"
-          className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <ScrollText className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">COUPON</span>
-        </Link>
-        <Link
-          href="/premium"
-          className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <Medal className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">PRÉMIUM</span>
-        </Link>
-        <Link
-          href="/profile"
-          className="flex flex-col items-center justify-center text-ia-gold gap-1 active:opacity-80"
-        >
-          <User className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">COMPTE</span>
-        </Link>
-      </nav>
+      <BottomNavBar />
     </div>
   );
 }

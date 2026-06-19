@@ -1,34 +1,32 @@
-import type { Signal } from "@/types/agent3.types";
+"use client";
 
-const CONFIG: Record<
-  Signal,
-  { label: string; emoji: string; className: string }
-> = {
-  value_bet: {
-    label: "VALUE BET",
-    emoji: "✅",
-    className: "bg-success/20 text-success border-success/40",
-  },
-  neutral: {
-    label: "NEUTRE",
-    emoji: "⚠️",
-    className: "bg-warning/20 text-warning border-warning/40",
-  },
-  avoid: {
-    label: "ÉVITER",
-    emoji: "❌",
-    className: "bg-danger/20 text-danger border-danger/40",
-  },
-};
+import React from "react";
 
-export function SignalBadge({ signal }: { signal: Signal }) {
-  const c = CONFIG[signal];
+interface SignalBadgeProps {
+  signal: "value_bet" | "neutral" | "avoid" | string;
+}
+
+export function SignalBadge({ signal }: SignalBadgeProps) {
+  const config = {
+    value_bet: {
+      label: "Value Bet",
+      classes: "bg-success/10 text-success border-success/20",
+    },
+    neutral: {
+      label: "Neutre",
+      classes: "bg-warning/10 text-warning border-warning/20",
+    },
+    avoid: {
+      label: "À Éviter",
+      classes: "bg-error/10 text-error border-error/20",
+    },
+  };
+
+  const current = config[signal as keyof typeof config] || config.neutral;
+
   return (
-    <span
-      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${c.className}`}
-    >
-      <span>{c.emoji}</span>
-      {c.label}
-    </span>
+    <div className={`px-2 py-0.5 rounded-full border text-[8px] font-black uppercase tracking-tighter ${current.classes}`}>
+      {current.label}
+    </div>
   );
 }

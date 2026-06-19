@@ -34,7 +34,7 @@ export default function BotThresholdsPage() {
   const handleSave = useCallback(() => {
     const config = { minOdds, maxVolatility, minConfidence, allocation };
     if (typeof window !== "undefined") {
-      localStorage.setItem("fasobet_bot_thresholds", JSON.stringify(config));
+      localStorage.setItem("fasobet by ben rachid sawadogo_bot_thresholds", JSON.stringify(config));
     }
     router.back();
   }, [minOdds, maxVolatility, minConfidence, allocation, router]);
@@ -61,7 +61,7 @@ export default function BotThresholdsPage() {
         </span>
       </header>
 
-      <main className="pt-20 pb-8 px-margin-mobile max-w-2xl mx-auto space-y-stack-lg">
+      <main className="pt-20 pb-8 px-margin-mobile max-w-2xl mx-auto space-y-4">
         {/* Seuil de Cote Minimale */}
         <section className="space-y-stack-md">
           <h2 className="font-label-caps text-label-caps text-outline uppercase tracking-widest">
@@ -208,7 +208,7 @@ export default function BotThresholdsPage() {
           <span className="font-label-caps text-label-caps uppercase">ANALYSES</span>
         </Link>
         <Link
-          href="#"
+          href="/bankroll"
           className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
         >
           <ScrollText className="w-6 h-6" />

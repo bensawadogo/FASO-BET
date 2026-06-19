@@ -179,7 +179,7 @@ export default function BotExecutionDetailPage() {
         </div>
       </header>
 
-      <main className="mt-20 px-margin-mobile space-y-stack-lg relative z-10 max-w-2xl mx-auto">
+      <main className="mt-20 px-margin-mobile space-y-4 relative z-10 max-w-2xl mx-auto">
         {/* Match Header Card */}
         <section className={`bg-surface-raised border border-outline-variant p-stack-md rounded-lg relative overflow-hidden ${
           data.isLive ? "border-primary-container glow-gold" : ""
@@ -296,7 +296,7 @@ export default function BotExecutionDetailPage() {
           </div>
           <div className="bg-surface-deep border border-outline-variant p-stack-md rounded-lg font-mono text-[13px] leading-relaxed relative">
             <div className="absolute left-4 top-4 bottom-4 w-px bg-outline-variant" />
-            <div className="space-y-stack-lg ml-6">
+            <div className="space-y-4 ml-6">
               {data.timeline.map((entry, i) => (
                 <div
                   key={i}
@@ -347,7 +347,7 @@ export default function BotExecutionDetailPage() {
           <span className="font-label-caps text-label-caps uppercase">ANALYSES</span>
         </Link>
         <Link
-          href="#"
+          href="/bankroll"
           className="flex flex-col items-center justify-center text-ia-gold gap-1 hover:text-on-surface transition-colors active:opacity-80"
         >
           <ScrollText className="w-6 h-6" />

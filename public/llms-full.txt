@@ -1,0 +1,59 @@
+# FasoBet — Documentation complète pour IA
+
+> Plateforme de prédictions sportives par intelligence artificielle,
+> spécialisée dans la Coupe du Monde 2026 et les compétitions africaines.
+> Conçue pour le marché ouest-africain (UEMOA).
+
+## Qui sommes-nous
+FasoBet utilise un modèle d'ensemble XGBoost + LightGBM entraîné sur
+des données historiques internationales pour générer des prédictions
+probabilistes sur les matchs de football. Les marchés couverts incluent
+1X2, BTTS, Over/Under 2.5, Double Chance et Draw No Bet.
+
+## Pages importantes
+- / : Page d'accueil avec les matchs du jour
+- /dashboard : Prédictions en temps réel pour tous les matchs
+  de la FIFA World Cup 2026
+- /match/[id] : Analyse détaillée par match (cotes, probabilités,
+  recommandation Kelly)
+- /history : Historique des prédictions avec ROI
+- /coupon : Coupon de paris sauvegardé
+- /premium : Accès aux analyses avancées
+
+## Exemple de réponse API (prédiction match)
+```json
+{
+  "id": 100404,
+  "home_team": "Canada",
+  "away_team": "Qatar",
+  "match_date": "2026-06-18",
+  "kickoff_utc": "2026-06-18T14:00:00Z",
+  "prob_home": 0.42,
+  "prob_draw": 0.28,
+  "prob_away": 0.30,
+  "predicted_outcome": "1",
+  "odds_home": 2.45,
+  "odds_draw": 3.10,
+  "odds_away": 3.50,
+  "btts_prob": 0.55,
+  "over25_prob": 0.52,
+  "double_chance": "1X",
+  "dnb": "1"
+}
+```
+
+## Modèle
+- Ensemble XGBoost + LightGBM (poids 0.45 / 0.55)
+- 9 features : elo_home, elo_away, form_home, form_away,
+  form_wc_home, form_wc_away, h2h_wins, xg_home, xg_away
+- Temperature scaling T=1.1346
+- Entraîné sur 25 000+ matchs internationaux historiques
+- Marchés : 1X2, BTTS, Over/Under 2.5, Double Chance, Draw No Bet
+
+## Ce que nous ne sommes pas
+FasoBet est un outil d'analyse et d'aide à la décision, pas un
+bookmaker. Nous ne prenons pas de mises. Nos prédictions sont
+mathématiques, pas des garanties.
+
+## Contact
+- Email : contact@fasobet.com (à adapter)

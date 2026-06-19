@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -15,30 +15,54 @@ import {
   MessageCircle,
   LogOut,
   ChevronRight,
-  ChartBar,
-  Medal,
 } from "lucide-react";
+import { BottomNavBar } from "@/components/ui/BottomNavBar";
 import { apiClient } from "@/lib/api-client";
+import { clearTokens } from "@/lib/auth";
 
 const SETTINGS_ITEMS = [
-  { icon: SlidersHorizontal, label: "Paramètres d'Analyse", href: "#" },
-  { icon: ShieldCheck, label: "Sécurité & 2FA", href: "#", hasNotification: false },
-  { icon: Bell, label: "Notifications", href: "#", hasNotification: true },
-  { icon: MessageCircle, label: "Support Technique", href: "#" },
+  { icon: SlidersHorizontal, label: "Paramètres d'Analyse", href: "/settings", hasNotification: false },
 ];
 
 export default function ProfilePage() {
   const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [bankroll, setBankroll] = useState<any>(null);
+  const [perf, setPerf] = useState<any>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    const load = async () => {
+      // getCurrentUser et getPerformance sont maintenant directement sur apiClient
+      const [userResult, perfResult] = await Promise.allSettled([
+        apiClient.getCurrentUser(),
+        apiClient.getPerformance(),
+      ]);
+      if (userResult.status === "fulfilled" && userResult.value) setUser(userResult.value);
+      if (perfResult.status === "fulfilled" && perfResult.value) setPerf(perfResult.value);
+      // Bankroll: pas encore disponible, on ignore silencieusement
+    };
+    load();
+  }, []);
 
   const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      localStorage.removeItem("user");
-    }
-    apiClient.clearAuthToken();
+    clearTokens();
     router.push("/login");
   };
+
+  const userName = user?.first_name ?? user?.email ?? "Utilisateur";
+  const rawCredits = bankroll?.bankroll_current;
+  const credits = isClient 
+    ? (rawCredits?.toLocaleString('fr-FR') ?? "—")
+    : (rawCredits ? rawCredits.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") : "—");
+  
+  const successRate = perf?.win_rate ? `${perf.win_rate}%` : "—";
+  const predictionsCount = perf?.total_predictions ?? "—";
+  const userId = user?.id ?? "—";
 
   return (
     <div className="font-body-md text-on-surface min-h-screen selection:bg-primary-container bg-surface-deep">
@@ -49,18 +73,18 @@ export default function ProfilePage() {
             <User className="w-5 h-5 text-on-surface-variant" />
           </div>
           <span className="font-headline-lg text-headline-lg font-bold text-ia-gold tracking-tight">
-            FASOBET
+            fasobet by ben rachid sawadogo
           </span>
         </Link>
         <div className="flex items-center gap-2 bg-primary-container px-3 py-1.5 rounded-lg border border-primary/20">
           <span className="font-headline-sm text-headline-sm text-on-background">
-            5,400 FCFA
+            {credits} FCFA
           </span>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="pt-20 pb-32 px-margin-mobile max-w-2xl mx-auto space-y-stack-lg">
+      <main className="pt-20 pb-32 px-margin-mobile max-w-2xl mx-auto space-y-4">
         {/* User Header Section */}
         <section className="flex flex-col items-center text-center space-y-stack-sm pt-4">
           <div className="relative">
@@ -73,9 +97,9 @@ export default function ProfilePage() {
           </div>
           <div className="space-y-1">
             <h1 className="font-headline-md text-headline-md text-on-surface">
-              Expert Analyst
+              {userName}
             </h1>
-            <p className="text-on-surface-variant font-body-md">ID: 9928347</p>
+            <p className="text-on-surface-variant font-body-md">ID: {userId}</p>
           </div>
         </section>
 
@@ -84,18 +108,12 @@ export default function ProfilePage() {
           <div className="flex justify-between items-start">
             <div className="space-y-1">
               <h2 className="font-label-caps text-label-caps text-ia-gold uppercase">
-                ABONNEMENT PREMIUM
+                ABONNEMENT
               </h2>
-              <p className="font-body-lg text-body-lg">Actif jusqu'au 15 Juin 2024</p>
+              <p className="font-body-lg text-body-lg">Actif</p>
             </div>
             <Star className="w-6 h-6 text-ia-gold" />
           </div>
-          <button
-            type="button"
-            className="w-full h-[48px] bg-surface-container-high border border-outline-variant text-on-surface font-label-caps uppercase tracking-wider rounded-lg hover:bg-surface-variant transition-colors active:scale-[0.98]"
-          >
-            Gérer mon forfait
-          </button>
         </section>
 
         {/* Performance Metrics Grid */}
@@ -106,7 +124,7 @@ export default function ProfilePage() {
               <p className="font-label-caps text-label-caps text-on-surface-variant uppercase">
                 Success Rate
               </p>
-              <p className="font-stat-value text-stat-value text-success-green">78%</p>
+              <p className="font-stat-value text-stat-value text-success-green">{successRate}</p>
             </div>
           </div>
           <div className="bg-surface-container-low border border-outline-variant p-stack-md rounded-lg flex flex-col justify-between aspect-square">
@@ -115,7 +133,7 @@ export default function ProfilePage() {
               <p className="font-label-caps text-label-caps text-on-surface-variant uppercase">
                 Suivies
               </p>
-              <p className="font-stat-value text-stat-value">342</p>
+              <p className="font-stat-value text-stat-value">{predictionsCount}</p>
             </div>
           </div>
         </section>
@@ -130,15 +148,9 @@ export default function ProfilePage() {
               <p className="font-label-caps text-label-caps text-on-surface-variant uppercase">
                 Total Credits
               </p>
-              <p className="font-stat-value text-stat-value">5,400 FCFA</p>
+              <p className="font-stat-value text-stat-value">{credits} FCFA</p>
             </div>
           </div>
-          <button
-            type="button"
-            className="h-touch-target-min px-4 bg-primary text-on-primary font-label-caps uppercase rounded hover:opacity-90 transition-opacity"
-          >
-            Recharger
-          </button>
         </section>
 
         {/* Settings List */}
@@ -179,42 +191,13 @@ export default function ProfilePage() {
             DÉCONNEXION
           </button>
           <p className="text-center text-[10px] text-on-surface-variant mt-8 uppercase tracking-widest opacity-50">
-            Fasobet Terminal v2.4.1 | 2024
+            fasobet by ben rachid sawadogo Terminal v2.4.1 | 2024
           </p>
         </section>
       </main>
 
       {/* BottomNavBar */}
-      <nav className="fixed bottom-0 w-full z-50 bg-surface-deep border-t border-outline-variant flex justify-around items-center h-[72px] px-base">
-        <Link
-          href="/dashboard"
-          className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <ChartBar className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">ANALYSES</span>
-        </Link>
-        <Link
-          href="#"
-          className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <ScrollText className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">COUPON</span>
-        </Link>
-        <Link
-          href="#"
-          className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <Medal className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">PRÉMIUM</span>
-        </Link>
-        <Link
-          href="/profile"
-          className="flex flex-col items-center justify-center text-ia-gold gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <User className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">COMPTE</span>
-        </Link>
-      </nav>
+      <BottomNavBar />
     </div>
   );
 }

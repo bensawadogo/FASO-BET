@@ -1,0 +1,21 @@
+{
+  "name":             "FasoBet",
+  "short_name":       "FasoBet",
+  "description":      "Prédictions sportives IA — Champions League, CAN, ligues africaines",
+  "start_url":        "/",
+  "display":          "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color":      "#F59E0B",
+  "orientation":      "portrait",
+  "lang":             "fr",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512",
+      "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Dashboard", "url": "/dashboard", "description": "Prédictions du jour" },
+    { "name": "Premium",   "url": "/premium",   "description": "Plan Premium" }
+  ]
+}

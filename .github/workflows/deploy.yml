@@ -1,0 +1,71 @@
+name: FasoBet CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Build Next.js
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8001
+          NEXT_PUBLIC_INFERENCE_URL: http://localhost:8000
+          NEXT_PUBLIC_DJANGO_URL: http://localhost:8001
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps
+        run: |
+          pip install -r requirements.django.txt
+          pip install -r requirements.fastapi.txt
+
+      - name: Django check
+        run: |
+          DJANGO_DEBUG=True python manage.py check
+        env:
+          DJANGO_SECRET_KEY: test-secret-key-ci
+          DJANGO_DEBUG: 'True'
+          JWT_SECRET: test-jwt-secret-ci
+
+      - name: Run Python tests
+        run: python -m pytest api/tests/ -v --tb=short
+        env:
+          DJANGO_SECRET_KEY: test-secret-key-ci
+          DJANGO_DEBUG: 'True'
+          JWT_SECRET: test-jwt-secret-ci
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to production
+        run: |
+          echo "Deploy step — configure your hosting:"
+          echo "  VPS:       ssh user@host 'cd /app && git pull && docker compose up -d --build'"
+          echo "  Railway:   railway up --service fasobet"
+          echo "  Render:    auto-deploy on push to main"

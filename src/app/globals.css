@@ -2,9 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-main: #0a0a0f;
+  --bg-card: rgba(255,255,255,0.04);
+  --bg-card-hover: rgba(255,255,255,0.06);
+  --border-subtle: rgba(255,255,255,0.08);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255,255,255,0.6);
+  --text-muted: rgba(255,255,255,0.3);
+  --accent-green: #34d399;
+  --accent-green-bg: rgba(16,185,129,0.12);
+  --accent-purple: #a78bfa;
+  --accent-gold: #f59e0b;
+
+  /* MatchCard v3 color system */
+  --color-positive: #1fb870;
+  --color-neutral-accent: #f59e0b;
+  --color-negative: #ef4444;
+  --color-surface: rgba(255,255,255,0.04);
+  --color-surface-hover: rgba(255,255,255,0.06);
+  --color-border: rgba(255,255,255,0.08);
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255,255,255,0.6);
+  --color-bg: #0a0a0f;
+}
+
 @layer base {
   body {
-    @apply bg-surface-deep text-on-surface font-body-md;
+    background: var(--bg-main) !important;
+    color: var(--text-primary) !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: max(884px, 100dvh);

@@ -56,10 +56,17 @@ export function computeLambdas(
   xgAwayDef: number,
   leagueAvg: number
 ) {
-  const lambdaHome = (xgHomeAtt * xgAwayDef) / leagueAvg;
-  const lambdaAway = (xgAwayAtt * xgHomeDef) / leagueAvg;
+  const divisor = leagueAvg > 0 ? leagueAvg : 1.0;
+  const homeAttack = xgHomeAtt / divisor;
+  const homeDefense = xgHomeDef / divisor;
+  const awayAttack = xgAwayAtt / divisor;
+  const awayDefense = xgAwayDef / divisor;
+
+  const lambdaHome = homeAttack * awayDefense * (leagueAvg / 2);
+  const lambdaAway = awayAttack * homeDefense * (leagueAvg / 2);
+
   return {
-    lambda_home: Math.round(lambdaHome * 100) / 100,
-    lambda_away: Math.round(lambdaAway * 100) / 100,
+    lambda_home: Math.max(0.1, Math.round(lambdaHome * 100) / 100),
+    lambda_away: Math.max(0.1, Math.round(lambdaAway * 100) / 100),
   };
 }

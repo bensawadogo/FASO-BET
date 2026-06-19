@@ -1,24 +1,23 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import {
-  Flag,
-  TrendingUp,
-  LineChart,
-  Trophy,
-  Shield,
-  Star,
-  Lightbulb,
-  Calendar,
-  BarChart3,
-  ScrollText,
-  Medal,
-  User,
-  Terminal,
-  Zap,
-} from "lucide-react";
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Flag, Shield, Star, TrendingUp, LineChart, Trophy, Lightbulb, Calendar, User, Terminal, Zap } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
+import { BottomNavBar } from "@/components/ui/BottomNavBar";
+
+export const revalidate = 3600;
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  return {
+    title: `Ligue — FasoBet`,
+    description: "Analyse IA et prédictions pour cette ligue",
+  };
+}
+
+export async function generateStaticParams() {
+  return [{ id: "ligue1-bf" }, { id: "botola-pro" }, { id: "caf-champions" }, { id: "chan" }];
+}
 
 // ─── Types ─────────────────────────────────────────────────
 interface LeagueData {
@@ -62,10 +61,11 @@ function FormBadge({ letter }: { letter: "W" | "D" | "L" }) {
   return <span className={`w-5 h-5 flex items-center justify-center ${config[letter]}`}>{letter}</span>;
 }
 
-// ─── Leagues data ──────────────────────────────────────────
-const LEAGUES: Record<string, LeagueData> = {
-  "ligue-1-burkina": {
-    id: "ligue-1-burkina",
+// ─── Mock data (fallback si API indisponible en dev) ──────
+function getMockLeague(leagueId: string): LeagueData | null {
+  const LEAGUES: Record<string, LeagueData> = {
+  "ligue1-bf": {
+    id: "ligue1-bf",
     name: "Ligue 1 Burkina",
     flag: <Flag className="w-8 h-8 text-ia-gold" />,
     season: "SAISON 2023-2024 • TERMINAL ANALYTIQUE",
@@ -160,12 +160,54 @@ const LEAGUES: Record<string, LeagueData> = {
     isStable: true,
   },
 };
+  return LEAGUES[leagueId] ?? null;
+}
+
+function normalizeLeague(maybe: LeagueData | null): LeagueData | null {
+  if (!maybe) return null;
+
+  return {
+    ...maybe,
+    chartBars: Array.isArray(maybe.chartBars) ? maybe.chartBars : [],
+    powerRankings: Array.isArray(maybe.powerRankings) ? maybe.powerRankings : [],
+    logs: Array.isArray(maybe.logs) ? maybe.logs : [],
+    season: typeof maybe.season === "string" ? maybe.season : "",
+    profit: typeof maybe.profit === "string" ? maybe.profit : "",
+    avgOdds: typeof maybe.avgOdds === "number" ? maybe.avgOdds : 0,
+    winRate: typeof maybe.winRate === "number" ? maybe.winRate : 0,
+    insightHtml: maybe.insightHtml ?? <></>,
+  };
+}
 
 // ─── Main Page ─────────────────────────────────────────────
-export default function LeagueDetailPage() {
-  const params = useParams();
-  const leagueId = (params.id as string) || "ligue-1-burkina";
-  const league = LEAGUES[leagueId] || LEAGUES["ligue-1-burkina"];
+export default async function LeagueDetailPage({ params }: { params: { id: string } }) {
+  const { id: leagueId } = params;
+  let league: LeagueData | null = null;
+
+  try {
+    const res = await apiClient.controlApi.getLeagueById(leagueId);
+    if (res.success && res.data) {
+      // Adapter la réponse API au format LeagueData si nécessaire
+      league = normalizeLeague(res.data as unknown as LeagueData);
+    }
+  } catch {
+    // Silently fail — fallback handled below
+  }
+
+  // Fallback en mode développement uniquement
+  if (!league && process.env.NODE_ENV === "development") {
+    league = normalizeLeague(getMockLeague(leagueId) ?? getMockLeague("ligue1-bf")!);
+  }
+
+  league = normalizeLeague(league);
+
+  if (!league) {
+    notFound();
+  }
+
+  const seasonParts = league.season.split("•");
+  const seasonLeft = seasonParts[0] ?? "";
+  const seasonRight = seasonParts[1] ?? "";
 
   return (
     <div className="bg-surface-deep font-body-md overflow-x-hidden min-h-screen pb-28">
@@ -173,7 +215,7 @@ export default function LeagueDetailPage() {
       <header className="fixed top-0 w-full z-50 bg-background border-b border-outline-variant flex justify-between items-center h-14 px-margin-mobile">
         <Link href="/dashboard" className="flex items-center gap-3">
           <Terminal className="w-5 h-5 text-ia-gold" />
-          <span className="font-headline-lg text-headline-lg font-bold text-ia-gold tracking-tight">FASOBET</span>
+          <span className="font-headline-lg text-headline-lg font-bold text-ia-gold tracking-tight">fasobet<br /><span className="text-xs text-ia-gold/60 font-normal tracking-normal">by ben rachid sawadogo</span></span>
         </Link>
         <div className="flex items-center gap-2">
           <span className="font-headline-sm text-headline-sm text-on-background px-3 py-1 bg-surface-container rounded-lg border border-outline-variant">5,400 FCFA</span>
@@ -192,7 +234,7 @@ export default function LeagueDetailPage() {
           </div>
           <h1 className="font-headline-lg text-headline-lg text-on-surface">{league.name}</h1>
           <p className="font-body-md text-on-surface-variant flex items-center gap-2">
-            {league.season.split("•")[0]} <span className="w-1 h-1 rounded-full bg-outline" /> {league.season.split("•")[1] || ""}
+            {seasonLeft} <span className="w-1 h-1 rounded-full bg-outline" /> {seasonRight}
           </p>
         </div>
 
@@ -339,24 +381,7 @@ export default function LeagueDetailPage() {
       </main>
 
       {/* BottomNavBar */}
-      <nav className="fixed bottom-0 w-full z-50 bg-surface-deep border-t border-outline-variant flex justify-around items-center h-[72px] px-base">
-        <Link href="/dashboard" className="flex flex-col items-center justify-center text-ia-gold gap-1">
-          <BarChart3 className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">ANALYSES</span>
-        </Link>
-        <Link href="#" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors">
-          <ScrollText className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">COUPON</span>
-        </Link>
-        <Link href="/premium" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors">
-          <Medal className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">PRÉMIUM</span>
-        </Link>
-        <Link href="/profile" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors">
-          <User className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">COMPTE</span>
-        </Link>
-      </nav>
+      <BottomNavBar />
     </div>
   );
 }

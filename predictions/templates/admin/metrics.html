@@ -1,0 +1,44 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>📊 FasoBet Métriques</h1>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin:20px 0">
+  <div style="background:#1a1a2e;padding:20px;border-radius:8px;color:white">
+    <h3 style="color:#F59E0B;margin:0 0 8px 0">Utilisateurs</h3>
+    <p style="font-size:2em;margin:0">{{ total_users }}</p>
+    <small style="color:#aaa">{{ active_week }} actifs cette semaine</small>
+  </div>
+  <div style="background:#1a1a2e;padding:20px;border-radius:8px;color:white">
+    <h3 style="color:#F59E0B;margin:0 0 8px 0">Prédictions</h3>
+    <p style="font-size:2em;margin:0">{{ predictions_month }}</p>
+    <small style="color:#aaa">{{ predictions_week }} cette semaine</small>
+  </div>
+  <div style="background:#1a1a2e;padding:20px;border-radius:8px;color:white">
+    <h3 style="color:#F59E0B;margin:0 0 8px 0">Taux de Réussite</h3>
+    <p style="font-size:2em;margin:0">{{ win_rate }}%</p>
+    <small style="color:#aaa">{{ total_predictions }} total prédictions</small>
+  </div>
+</div>
+
+<h2>Dernières prédictions</h2>
+<table style="width:100%;border-collapse:collapse">
+  <tr style="background:#F59E0B;color:black">
+    <th style="padding:8px">Match</th>
+    <th style="padding:8px">Prédiction</th>
+    <th style="padding:8px">Confiance</th>
+    <th style="padding:8px">Résultat</th>
+    <th style="padding:8px">Date</th>
+  </tr>
+  {% for p in recent_predictions %}
+  <tr style="border-bottom:1px solid #333;color:white">
+    <td style="padding:8px">{{ p.home_team }} vs {{ p.away_team }}</td>
+    <td style="padding:8px">{{ p.get_predicted_outcome_display }}</td>
+    <td style="padding:8px">{{ p.confidence_score|floatformat:0 }}%</td>
+    <td style="padding:8px">{{ p.actual_result|default:"En attente" }}</td>
+    <td style="padding:8px">{{ p.created_at|date:"d/m/Y H:i" }}</td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa">Aucune prédiction pour le moment.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

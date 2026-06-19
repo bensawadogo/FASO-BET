@@ -29,7 +29,7 @@ from api.models import (
     StrategistInput,
 )
 
-API_TIMEOUT = 30  # secondes
+API_TIMEOUT = 120  # secondes
 MAX_RETRIES = 2
 
 
@@ -76,7 +76,7 @@ class Pipeline:
                 pipeline_ran_at=datetime.now(timezone.utc).isoformat(),
             )
         
-        if not collected.verified_matches:
+        if collected is None or not collected.verified_matches:
             print("[Pipeline] No verified matches found")
             return PipelineNoMatches(
                 pipeline_ran_at=datetime.now(timezone.utc).isoformat(),

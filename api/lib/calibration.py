@@ -1,8 +1,6 @@
 """FasoBet - Calibration & Risk-Gating (BLOC 2)
-Équivalent Python de src/lib/calibration.ts
-
-Ajuste la confiance des prédictions en fonction des données historiques
-et filtre les paris risqués via le risk-gating.
+SOURCE DE VÉRITÉ pour la logique de calibration.
+La version TypeScript (src/lib/calibration.ts) est un miroir et doit rester alignée.
 """
 
 from __future__ import annotations
@@ -51,19 +49,34 @@ def get_calibrated_confidence(
     """
     if not calibrations:
         return trust
-    
+
+    import math
+
     # Filtrer par marché
     market_buckets = [c for c in calibrations if c.get("market") == market]
     if not market_buckets:
         return trust
-    
-    # Trouver le bucket correspondant
+
+    # Moyenne pondérée (aligné avec src/lib/calibration.ts)
+    # Poids = proximité * log(sampleCount)
+    weighted_sum = 0.0
+    weight_total = 0.0
+
     for bucket in market_buckets:
-        trust_start, trust_end = bucket.get("trust_range", (0, 0))
-        if trust_start <= trust < trust_end:
-            return bucket.get("adjusted_confidence", trust)
-    
-    return trust
+        sample_count = bucket.get("sample_count", 0)
+        if sample_count < 50:
+            continue
+        observed = bucket.get("adjusted_confidence", trust)
+        proximity = 1.0 / (1.0 + abs(trust - observed))
+        weight = proximity * math.log10(sample_count + 1)
+        weighted_sum += observed * weight
+        weight_total += weight
+
+    if weight_total == 0:
+        return trust
+
+    calibrated = round(weighted_sum / weight_total)
+    return max(10.0, min(95.0, float(calibrated)))
 
 
 def risk_gate(

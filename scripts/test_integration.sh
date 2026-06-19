@@ -41,7 +41,7 @@ fi
 # ─── 4. Vérifier FastAPI ───────────────────────────────────
 echo ""
 echo "⚡ [4/6] Vérification de FastAPI..."
-FASTAPI_URL="http://localhost:8001"
+FASTAPI_URL="http://localhost:8000"
 
 if curl -sf "$FASTAPI_URL/health" > /dev/null 2>&1; then
     echo "✅ FastAPI /health répond"

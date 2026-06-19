@@ -2,10 +2,11 @@ import type { Config } from 'tailwindcss';
 
 const config: Config = {
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  // Le thème est forcé en dark via <html className="dark"> dans layout.tsx.
+  // Pour un futur toggle light/dark, changer 'class' en 'media' ou implémenter le toggle.
   darkMode: 'class',
   theme: {
     extend: {
@@ -133,13 +134,11 @@ const config: Config = {
       },
       animation: {
         'spin-slow': 'spin 3s linear infinite',
+        'spin-slower': 'spin 6s linear infinite',
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       maxWidth: {
         'max-width': '1280px',
-      },
-      padding: {
-        'margin-desktop': '2rem',
-        'margin-mobile': '1rem',
       },
       screens: {
         xs: '375px',

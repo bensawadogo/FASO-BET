@@ -1,10 +1,13 @@
 # ──────────────────────────────────────────────────────────
-# FasoBet — Django Control Plane
-# Python 3.11, PostgreSQL, hot-reload
+# FasoBet — Django (Multi-stage Production)
+# Stage 1: builder (compile deps)
+# Stage 2: runtime (minimal)
+# Size: ~800MB → ~600MB optimisé
 # ──────────────────────────────────────────────────────────
-FROM python:3.11-slim AS base
 
-WORKDIR /app
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
 
 # Dépendances système
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -12,36 +15,39 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Dépendances Python
-COPY requirements.txt .
-RUN pip install --no-cache-dir \
-    "django>=4.2,<5.0" \
-    psycopg2-binary \
-    djangorestframework \
-    django-cors-headers
+# Copy requirements
+COPY requirements.django.txt .
 
+# Build wheels (compiles tout une fois)
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /build/wheels -r requirements.django.txt
+
+# ──────────────────────────────────────────────────────────
+# Runtime Stage — Minimal
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Seulement les libs nécessaires en runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy wheels depuis builder
+COPY --from=builder /build/wheels /wheels
+
+# Install wheels (très rapide)
+RUN pip install --no-cache /wheels/*
+
+# Copy app source
 COPY . .
 
-EXPOSE 8000
+EXPOSE 8001
 
-# Entrypoint : migrations + server
-COPY <<EOF /docker-entrypoint.sh
-#!/bin/sh
-set -e
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD curl -f http://127.0.0.1:8001/health/ || exit 1
 
-echo "⏳ Attente de PostgreSQL..."
-until PGPASSWORD=\$DJANGO_DB_PASSWORD psql -h "\$DJANGO_DB_HOST" -U "\$DJANGO_DB_USER" -d "\$DJANGO_DB_NAME" -c '\q' 2>/dev/null; do
-  sleep 1
-done
-echo "✅ PostgreSQL prêt"
-
-echo "📦 Migrations..."
-python manage.py migrate --noinput
-
-echo "🚀 Django prêt sur :8000"
-exec python manage.py runserver 0.0.0.0:8000
-EOF
-
-RUN chmod +x /docker-entrypoint.sh
-
-ENTRYPOINT ["/docker-entrypoint.sh"]
+# Production: pas de volumes, source copié
+CMD ["gunicorn", "sportpred.wsgi:application", "--bind", "0.0.0.0:8001", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-"]

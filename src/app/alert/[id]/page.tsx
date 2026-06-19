@@ -24,27 +24,11 @@ import {
   Wallet,
   Bot,
 } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
+import { ToggleSwitch } from "@/components/ToggleSwitch";
 
 // ─── Types ─────────────────────────────────────────────────
 type Channel = "push" | "whatsapp" | "telegram";
-
-// ─── ToggleSwitch ──────────────────────────────────────────
-function ToggleSwitch({ checked, onChange, ariaLabel }: { checked: boolean; onChange: (v: boolean) => void; ariaLabel: string }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={ariaLabel}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 ${
-        checked ? "bg-success-green" : "bg-surface-container-highest"
-      }`}
-    >
-      <span className={`inline-block h-5 w-5 rounded-full bg-white transition-transform duration-300 ${checked ? "translate-x-5" : "translate-x-[2px]"}`} />
-    </button>
-  );
-}
 
 // ─── Main Page ─────────────────────────────────────────────
 export default function AlertConfigPage() {
@@ -72,14 +56,23 @@ export default function AlertConfigPage() {
   // CTA state
   const [activateState, setActivateState] = useState<"idle" | "loading" | "done">("idle");
 
-  const handleActivate = useCallback(() => {
+  const handleActivate = useCallback(async () => {
     if (activateState !== "idle") return;
     setActivateState("loading");
-    setTimeout(() => {
+    try {
+      await apiClient.controlApi.createAlert({
+        channel,
+        league: matchId || "",
+        min_confidence: Math.round(oddsThreshold * 20),
+        is_active: true,
+        contact: "",
+      });
       setActivateState("done");
       setTimeout(() => setActivateState("idle"), 2000);
-    }, 1500);
-  }, [activateState]);
+    } catch {
+      setActivateState("idle");
+    }
+  }, [activateState, channel, matchId, oddsThreshold]);
 
   const channels: { key: Channel; label: string; icon: React.ReactNode }[] = [
     { key: "push", label: "PUSH", icon: <Bell className="w-5 h-5 text-text-primary" /> },
@@ -97,7 +90,7 @@ export default function AlertConfigPage() {
           </button>
           <span className="font-headline-sm text-headline-sm text-on-background">Configuration Alerte</span>
         </div>
-        <span className="font-headline-lg text-headline-lg font-bold text-ia-gold tracking-tight">FASOBET</span>
+        <span className="font-headline-lg text-headline-lg font-bold text-ia-gold tracking-tight">fasobet<br /><span className="text-xs text-ia-gold/60 font-normal tracking-normal">by ben rachid sawadogo</span></span>
       </header>
 
       <main className="pt-20 pb-32 px-margin-mobile max-w-md mx-auto">
@@ -375,7 +368,7 @@ export default function AlertConfigPage() {
           <BarChart3 className="w-6 h-6" />
           <span className="font-label-caps text-label-caps uppercase">ANALYSES</span>
         </Link>
-        <Link href="#" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80">
+        <Link href="/bankroll" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80">
           <ScrollText className="w-6 h-6" />
           <span className="font-label-caps text-label-caps uppercase">COUPON</span>
         </Link>

@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { buildHistoricalContext } from "@/data/adapters/historical-adapter";
 import type { HistoricalContext } from "@/types/historical.types";
+import { logger } from "@/lib/logger";
 
 const DATA_DIR = join(process.cwd(), "data");
 const PROGRESS_FILE = join(DATA_DIR, "progress.csv");
@@ -20,7 +21,7 @@ export async function getHistoricalContext(
   if (cachedContext && !forceRefresh) return cachedContext;
 
   if (!existsSync(PROGRESS_FILE) || !existsSync(ALL_MATCHES_FILE)) {
-    console.warn(
+    logger.warn(
       "[FeatureStore] Fichiers data/ manquants :",
       PROGRESS_FILE,
       ALL_MATCHES_FILE
@@ -33,12 +34,12 @@ export async function getHistoricalContext(
     const allMatchesBuffer = readFileSync(ALL_MATCHES_FILE).buffer;
 
     cachedContext = buildHistoricalContext(progressRaw, allMatchesBuffer);
-    console.log(
+    logger.info(
       `[FeatureStore] Contexte chargé : ${cachedContext.leaguePriors.length} ligues, ${cachedContext.marketCalibrations.length} calibrations, ${cachedContext.progress.length} points progression`
     );
     return cachedContext;
   } catch (e) {
-    console.error("[FeatureStore] Erreur chargement contexte historique :", e);
+    logger.error("[FeatureStore] Erreur chargement contexte historique :", e);
     return null;
   }
 }

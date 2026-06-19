@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   User,
@@ -12,6 +12,7 @@ import {
   Medal,
   Trophy,
 } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
 
 type TimeframeKey = "30d" | "90d";
 
@@ -35,6 +36,50 @@ const LOGS = [
 
 export default function PerformancePage() {
   const [timeframe, setTimeframe] = useState<TimeframeKey>("90d");
+  const [isClient, setIsClient] = useState(false);
+  const [perf, setPerf] = useState<{
+    win_rate: number;
+    roi: number;
+    total: number;
+    won: number;
+    lost: number;
+    bankroll_current: number;
+  } | null>(null);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    const days = timeframe === "30d" ? 30 : 90;
+    apiClient.controlApi.getPerformance(days).then((res) => {
+      if (res.success && res.data) {
+        setPerf(res.data);
+      }
+    }).catch((err) => {
+      console.error("Performance fetch failed", err);
+      setPerf(null);
+    });
+  }, [timeframe]);
+
+  if (perf === null) {
+    return (
+      <div className="bg-background text-on-background font-body-md min-h-screen flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="text-4xl mb-4">⚠️</div>
+          <h2 className="font-headline-sm text-headline-sm text-on-surface mb-2">Données de performance indisponibles</h2>
+          <p className="text-on-surface-variant">Impossible de charger les métriques.<br />Veuillez réessayer plus tard.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const winRate = perf.win_rate;
+  const roi = perf.roi;
+  const total = perf.total;
+  const won = perf.won;
+  const lost = perf.lost;
+  const bankrollCurrent = perf.bankroll_current;
 
   return (
     <div className="bg-background text-on-background font-body-md min-h-screen pb-32">
@@ -45,15 +90,19 @@ export default function PerformancePage() {
 
       {/* TopAppBar */}
       <header className="fixed top-0 w-full z-50 bg-background border-b border-outline-variant flex justify-between items-center h-14 px-margin-mobile">
-        <Link href="/dashboard" className="flex items-center gap-3">
+        <Link href="/performance" className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border border-ia-gold/30">
             <User className="w-5 h-5 text-primary" />
           </div>
-          <h1 className="font-headline-lg text-headline-lg font-bold text-ia-gold tracking-tight">FASOBET</h1>
+          <h1 className="font-headline-lg text-headline-lg font-bold text-ia-gold tracking-tight">
+            fasobet<br /><span className="text-xs text-ia-gold/60 font-normal tracking-normal">by ben rachid sawadogo</span>
+          </h1>
         </Link>
         <div className="flex items-center gap-2 px-3 py-1 bg-surface-container rounded-lg border border-outline-variant">
           <Wallet className="w-[18px] h-[18px] text-ia-gold" />
-          <span className="font-label-caps text-label-caps text-on-background">5,400 FCFA</span>
+          <span className="font-label-caps text-label-caps text-on-background">
+            {isClient ? bankrollCurrent.toLocaleString('fr-FR') : bankrollCurrent.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} FCFA
+          </span>
         </div>
       </header>
 
@@ -63,30 +112,30 @@ export default function PerformancePage() {
           <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant hover:border-ia-gold/50 transition-colors hover:-translate-y-0.5 duration-200">
             <p className="font-label-caps text-label-caps text-on-surface-variant mb-1">ROI</p>
             <div className="flex items-end gap-1">
-              <span className="font-stat-value text-stat-value text-success-green">+14.2%</span>
+              <span className="font-stat-value text-stat-value text-success-green">{roi >= 0 ? "+" : ""}{roi}%</span>
               <TrendingUp className="w-4 h-4 text-success-green mb-1" />
             </div>
           </div>
           <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant hover:border-ia-gold/50 transition-colors hover:-translate-y-0.5 duration-200">
             <p className="font-label-caps text-label-caps text-on-surface-variant mb-1">YIELD</p>
             <div className="flex items-end gap-1">
-              <span className="font-stat-value text-stat-value text-ia-gold">6.8%</span>
+              <span className="font-stat-value text-stat-value text-ia-gold">{total > 0 ? ((won / total) * 100).toFixed(1) : "0.0"}%</span>
             </div>
           </div>
           <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant hover:border-ia-gold/50 transition-colors hover:-translate-y-0.5 duration-200">
             <p className="font-label-caps text-label-caps text-on-surface-variant mb-1">NET PROFIT</p>
             <div className="flex items-center gap-1">
-              <span className="font-stat-value text-stat-value text-on-surface truncate">124.5K</span>
+              <span className="font-stat-value text-stat-value text-on-surface truncate">{roi.toFixed(1)}K</span>
             </div>
           </div>
         </div>
-
+        
         {/* Equity Growth Chart */}
         <section className="bg-surface-deep border border-outline-variant rounded-lg p-stack-md mb-stack-lg relative overflow-hidden">
           <div className="flex justify-between items-center mb-stack-lg">
             <div>
               <h2 className="font-headline-sm text-headline-sm text-on-background uppercase tracking-wider">Equity Growth</h2>
-              <p className="text-xs text-on-surface-variant">Last 90 Days Portfolio Analysis</p>
+              <p className="text-xs text-on-surface-variant">Last {timeframe === "30d" ? "30" : "90"} Days Portfolio Analysis</p>
             </div>
             <div className="flex gap-2">
               {(["30d", "90d"] as const).map((tf) => (
@@ -213,7 +262,7 @@ export default function PerformancePage() {
         <Link href="/dashboard" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80">
           <BarChart3 className="w-6 h-6" /><span className="font-label-caps text-label-caps uppercase">ANALYSES</span>
         </Link>
-        <Link href="#" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80">
+        <Link href="/bankroll" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80">
           <ScrollText className="w-6 h-6" /><span className="font-label-caps text-label-caps uppercase">COUPON</span>
         </Link>
         <Link href="/premium" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80">

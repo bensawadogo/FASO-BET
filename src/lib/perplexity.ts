@@ -1,14 +1,4 @@
-import { readFileSync } from "fs";
-import { join } from "path";
-
-export function loadFootballSkill(): string {
-  try {
-    const path = join(process.cwd(), "src", "skills", "football-prediction.md");
-    return readFileSync(path, "utf-8");
-  } catch {
-    return "Suivre value bet, consensus et combinés express.";
-  }
-}
+import { loadFootballSkill } from "./skills-loader";
 
 const PERPLEXITY_TIMEOUT = 30_000; // 30 secondes
 

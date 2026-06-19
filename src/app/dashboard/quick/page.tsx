@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
-import type { PipelineSuccess } from "@/agents/pipeline";
+// import type { PipelineSuccess } from "@/agents/pipeline"; // Obsolete
 import type { MatchPrediction } from "@/types/agent3.types";
 import {
   User,
@@ -13,11 +13,11 @@ import {
   Shield,
   HelpCircle,
   BarChart3,
-  ScrollText,
-  Medal,
   ArrowRight,
 } from "lucide-react";
+import { BottomNavBar } from "@/components/ui/BottomNavBar";
 import { apiClient } from "@/lib/api-client";
+import { routes } from "@/lib/routes";
 
 type Step = "idle" | "collector" | "statistician" | "strategist" | "done" | "error";
 type SortMode = "odds" | "confidence" | "value";
@@ -28,33 +28,25 @@ function sleep(ms: number): Promise<void> {
 
 export default function QuickScanPage() {
   const [step, setStep] = useState<Step>("idle");
-  const [result, setResult] = useState<PipelineSuccess | null>(null);
+  const [scanStatus, setScanStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [result, setResult] = useState<any | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>();
   const [sortMode, setSortMode] = useState<SortMode>("value");
 
   const runPipeline = useCallback(async () => {
-    setStep("collector");
+    setScanStatus("loading");
     setErrorMessage(undefined);
-    setResult(null);
-    await sleep(50);
     try {
-      setStep("statistician");
-      await sleep(50);
-      const response = await apiClient.fastApiClient.predict();
-      setStep("strategist");
-      await sleep(50);
-      if (response.success && response.data) {
-        setResult(response.data as unknown as PipelineSuccess);
-        setStep("done");
-      } else {
-        setStep("error");
-        setErrorMessage(response.error || "Erreur lors de l'exécution du pipeline");
-      }
+      const response = await fetch(`${process.env.NEXT_PUBLIC_INFERENCE_URL || 'http://localhost:8000'}/pipeline/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      setScanStatus(response.ok ? "done" : "error");
     } catch (e) {
-      setStep("error");
-      setErrorMessage(e instanceof Error ? e.message : "Erreur réseau");
+      setScanStatus("error");
     }
   }, []);
+
 
   const predictions = result?.predictions.predictions ?? [];
 
@@ -96,7 +88,7 @@ export default function QuickScanPage() {
             <User className="w-5 h-5 text-on-surface-variant" />
           </div>
           <h1 className="font-headline-lg text-headline-lg font-bold text-ia-gold tracking-tight">
-            FASOBET
+            fasobet<br /><span className="text-xs text-ia-gold/60 font-normal tracking-normal">by ben rachid sawadogo</span>
           </h1>
         </Link>
         <div className="flex items-center gap-stack-sm">
@@ -212,7 +204,7 @@ export default function QuickScanPage() {
               return (
                 <Link
                   key={p.match_id}
-                  href={`/match/${p.match_id}`}
+                  href={routes.matchDetail(p.match_id)}
                   className={`bet-row h-[72px] px-margin-mobile border-b border-outline-variant flex items-center gap-3 transition-colors active:bg-surface-container-low ${
                     isAvoid ? "opacity-50 grayscale" : ""
                   }`}
@@ -321,27 +313,7 @@ export default function QuickScanPage() {
       </main>
 
       {/* BottomNavBar */}
-      <nav className="fixed bottom-0 w-full z-50 bg-surface-deep border-t border-outline-variant flex justify-around items-center h-[72px] px-base">
-        <Link
-          href="/dashboard/quick"
-          className="flex flex-col items-center justify-center text-ia-gold gap-1"
-        >
-          <BarChart3 className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">ANALYSES</span>
-        </Link>
-        <Link href="#" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80">
-          <ScrollText className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">COUPON</span>
-        </Link>
-        <Link href="/premium" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80">
-          <Medal className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">PRÉMIUM</span>
-        </Link>
-        <Link href="/profile" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80">
-          <User className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">COMPTE</span>
-        </Link>
-      </nav>
+      <BottomNavBar />
     </div>
   );
 }

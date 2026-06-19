@@ -1,0 +1,12 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>Suivi quota TheOddsApi</h1>
+<table>
+  <tr><th>Quota restant</th><td>{{ quota_remaining }} / {{ quota_total }} ({{ quota_usage_pct }}% utilise)</td></tr>
+  <tr><th>Matchs live</th><td>{{ nb_live_matches }}</td></tr>
+  <tr><th>Matchs aujourd'hui (CdM)</th><td>{{ nb_today_matches }}</td></tr>
+  <tr><th>Intervalle rafraichissement</th><td>{% if refresh_interval_seconds %}{{ refresh_interval_seconds }}s{% else %}Aucun match live{% endif %}</td></tr>
+  <tr><th>Jours restants tournoi</th><td>{{ days_remaining }}</td></tr>
+  <tr><th>Matchs en cache Redis</th><td>{{ cache_size }}</td></tr>
+</table>
+{% endblock %}

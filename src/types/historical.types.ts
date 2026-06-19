@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// ─── progress.csv ───────────────────────────────────────────
 export const ProgressRowSchema = z.object({
   date: z.string(),
   bankersCounter: z.number(),
@@ -8,9 +7,9 @@ export const ProgressRowSchema = z.object({
   allMatchesCounter: z.number(),
   allMatchesPercent: z.number(),
 });
+
 export type ProgressRow = z.infer<typeof ProgressRowSchema>;
 
-// ─── allMatches.xlsx (25 colonnes) ──────────────────────────
 export const HistoricalMatchSchema = z.object({
   date: z.string(),
   time: z.string(),
@@ -30,7 +29,7 @@ export const HistoricalMatchSchema = z.object({
   trustUnderover: z.number().nullable(),
   oddUnderover: z.number().nullable(),
   finalResult: z.string().nullable(),
-  trustFinalResult: z.number().min(0).max(100).nullable(),
+  trustFinalResult: z.number().nullable(),
   oddFinalResult: z.number().nullable(),
   correctScore: z.string().nullable(),
   halfTimeCorrectScore: z.string().nullable(),
@@ -38,9 +37,9 @@ export const HistoricalMatchSchema = z.object({
   trustBTTS: z.number().nullable(),
   oddBTTS: z.number().nullable(),
 });
+
 export type HistoricalMatch = z.infer<typeof HistoricalMatchSchema>;
 
-// ─── Agrégats calculés ──────────────────────────────────────
 export interface LeaguePrior {
   league: string;
   country: string;
@@ -56,7 +55,7 @@ export interface LeaguePrior {
 
 export interface MarketCalibration {
   market: string;
-  bucket: string;        // ex: "odd_1.5-2.0", "trust_80-100"
+  bucket: string;
   observedAccuracy: number;
   sampleCount: number;
 }

@@ -81,7 +81,7 @@ export default function BotSummaryPage() {
         <Link href="/dashboard" className="flex items-center gap-3">
           <User className="w-5 h-5 text-ia-gold" />
           <h1 className="font-headline-lg text-headline-lg font-bold text-ia-gold tracking-tight">
-            FASOBET
+            fasobet<br /><span className="text-xs text-ia-gold/60 font-normal tracking-normal">by ben rachid sawadogo</span>
           </h1>
         </Link>
         <div className="flex items-center bg-surface-container px-3 py-1 rounded border border-outline-variant">
@@ -90,7 +90,7 @@ export default function BotSummaryPage() {
         </div>
       </header>
 
-      <main className="pt-20 pb-8 px-margin-mobile max-w-xl mx-auto space-y-stack-lg">
+      <main className="pt-20 pb-8 px-margin-mobile max-w-xl mx-auto space-y-4">
         {/* Bot Status Indicator */}
         <section className="flex items-center justify-between bg-surface-raised border border-primary-container p-4 rounded-lg">
           <div className="flex items-center gap-3">

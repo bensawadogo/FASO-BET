@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
@@ -14,7 +14,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-// ─── Types ─────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface Criteria {
   label: string;
   value: string;
@@ -30,7 +30,7 @@ interface LogEntry {
   message: string;
 }
 
-// ─── Main Page ─────────────────────────────────────────────
+// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const LOG_TEMPLATES = [
   { prefix: "[OK]", color: "text-primary" },
   { prefix: "[IA]", color: "text-ia-gold" },
@@ -84,8 +84,8 @@ export default function BotExecutionPage() {
 
   const criteria: Criteria[] = [
     { label: "COTE", value: "2.15", status: "valid", detail: "/ Seuil 2.10" },
-    { label: "VOLATILITÉ", value: "12%", status: "stable", detail: "/ Seuil 15%" },
-    { label: "LIQUIDITÉ DU MARCHÉ", value: "HAUTE", status: "high", detail: "" },
+    { label: "VOLATILITÃ‰", value: "12%", status: "stable", detail: "/ Seuil 15%" },
+    { label: "LIQUIDITÃ‰ DU MARCHÃ‰", value: "HAUTE", status: "high", detail: "" },
   ];
 
   const statusIcons: Record<Criteria["status"], React.ReactNode> = {
@@ -100,7 +100,7 @@ export default function BotExecutionPage() {
     high: "VALIDE",
   };
 
-  // ─── Progress animation ──────────────────────────────────
+  // â”€â”€â”€ Progress animation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     const interval = setInterval(() => {
       if (progressRef.current < 98 && !cancelled) {
@@ -112,7 +112,7 @@ export default function BotExecutionPage() {
     return () => clearInterval(interval);
   }, [cancelled]);
 
-  // ─── Countdown ───────────────────────────────────────────
+  // â”€â”€â”€ Countdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
@@ -126,7 +126,7 @@ export default function BotExecutionPage() {
     return () => clearInterval(timerRef.current);
   }, []);
 
-  // ─── Dynamic logs ────────────────────────────────────────
+  // â”€â”€â”€ Dynamic logs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -162,7 +162,7 @@ export default function BotExecutionPage() {
           <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center border border-primary">
             <User className="w-5 h-5 text-primary" />
           </div>
-          <span className="font-headline-lg text-headline-lg font-bold text-ia-gold tracking-tight">FASOBET</span>
+          <span className="font-headline-lg text-headline-lg font-bold text-ia-gold tracking-tight">fasobet<br /><span className="text-xs text-ia-gold/60 font-normal tracking-normal">by ben rachid sawadogo</span></span>
         </Link>
         <div className="flex items-center gap-2 px-3 py-1 bg-surface-container rounded-lg border border-outline-variant">
           <span className="font-label-caps text-label-caps text-on-surface-variant">SOLDE</span>
@@ -180,15 +180,15 @@ export default function BotExecutionPage() {
           }`}>
             <span className={`w-2 h-2 rounded-full ${cancelled ? "bg-error" : "bg-success-green"}`} />
             <span className={`font-label-caps text-label-caps ${cancelled ? "text-error" : "text-success-green"}`}>
-              {cancelled ? "ORDRE ANNULÉ" : "BOT ACTIF : EXÉCUTION STRATÉGIQUE"}
+              {cancelled ? "ORDRE ANNULÃ‰" : "BOT ACTIF : EXÃ‰CUTION STRATÃ‰GIQUE"}
             </span>
           </div>
         </div>
 
-        {/* 1. ANALYSE DES CRITÈRES */}
+        {/* 1. ANALYSE DES CRITÃˆRES */}
         <section className="bg-surface-raised border border-outline-variant p-stack-md rounded-lg mb-stack-md">
           <div className="flex items-center justify-between mb-stack-sm border-b border-outline-variant pb-2">
-            <h2 className="font-headline-sm text-headline-sm text-ia-gold">ANALYSE DES CRITÈRES</h2>
+            <h2 className="font-headline-sm text-headline-sm text-ia-gold">ANALYSE DES CRITÃˆRES</h2>
             <BarChart3 className="w-5 h-5 text-ia-gold" />
           </div>
           <div className="grid grid-cols-1 gap-stack-sm">
@@ -210,17 +210,17 @@ export default function BotExecutionPage() {
           </div>
         </section>
 
-        {/* 2. EXÉCUTION DE L'ORDRE */}
+        {/* 2. EXÃ‰CUTION DE L'ORDRE */}
         <section className="bg-surface-deep border-2 border-ia-gold p-stack-md rounded-lg mb-stack-md relative overflow-hidden">
           <div className="absolute top-0 right-0 w-8 h-8 bg-ia-gold flex items-center justify-center" style={{ transform: "rotate(45deg) translate(16px, -16px)" }} />
           <div className="flex items-center gap-2 mb-stack-md">
             <Terminal className="w-5 h-5 text-ia-gold" />
-            <h2 className="font-headline-sm text-headline-sm text-on-surface">EXÉCUTION DE L'ORDRE</h2>
+            <h2 className="font-headline-sm text-headline-sm text-on-surface">EXÃ‰CUTION DE L'ORDRE</h2>
           </div>
           <div className="space-y-stack-md mb-stack-lg">
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-label-caps text-label-caps text-on-surface-variant mb-1">ÉVÉNEMENT</p>
+                <p className="font-label-caps text-label-caps text-on-surface-variant mb-1">Ã‰VÃ‰NEMENT</p>
                 <p className="font-headline-sm text-headline-sm text-primary">Raja CA vs AS FAR</p>
               </div>
               <div className="text-right">
@@ -244,7 +244,7 @@ export default function BotExecutionPage() {
           <div className="space-y-2">
             <div className="flex justify-between items-center font-label-caps text-label-caps">
               <span className={cancelled ? "text-error tracking-widest" : "text-success-green tracking-widest"}>
-                {cancelled ? "TRANSMISSION ANNULÉE" : "TRANSMISSION EN COURS..."}
+                {cancelled ? "TRANSMISSION ANNULÃ‰E" : "TRANSMISSION EN COURS..."}
               </span>
               <span className="text-on-surface">{Math.floor(progress)}%</span>
             </div>
@@ -303,13 +303,13 @@ export default function BotExecutionPage() {
           <BarChart3 className="w-6 h-6" />
           <span className="font-label-caps text-label-caps uppercase">ANALYSES</span>
         </Link>
-        <Link href="#" className="flex flex-col items-center justify-center text-ia-gold gap-1 hover:text-on-surface transition-colors active:opacity-80">
+        <Link href="/bankroll" className="flex flex-col items-center justify-center text-ia-gold gap-1 hover:text-on-surface transition-colors active:opacity-80">
           <ScrollText className="w-6 h-6" />
           <span className="font-label-caps text-label-caps uppercase">COUPON</span>
         </Link>
         <Link href="/premium" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors">
           <Medal className="w-6 h-6" />
-          <span className="font-label-caps text-label-caps uppercase">PRÉMIUM</span>
+          <span className="font-label-caps text-label-caps uppercase">PRÃ‰MIUM</span>
         </Link>
         <Link href="/profile" className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors">
           <User className="w-6 h-6" />

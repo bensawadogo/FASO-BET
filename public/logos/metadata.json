@@ -1,0 +1,482 @@
+{
+  "AC Milan": {
+    "slug": "ac_milan",
+    "local_path": "/logos/teams/ac_milan.png",
+    "status": "downloaded"
+  },
+  "Afrique Du Sud": {
+    "slug": "afrique_du_sud",
+    "local_path": "/logos/teams/afrique_du_sud.png",
+    "status": "downloaded"
+  },
+  "Ajax": {
+    "slug": "ajax",
+    "local_path": "/logos/teams/ajax.png",
+    "status": "downloaded"
+  },
+  "Algerie": {
+    "slug": "algerie",
+    "local_path": "/logos/teams/algerie.png",
+    "status": "downloaded"
+  },
+  "Allemagne": {
+    "slug": "allemagne",
+    "local_path": "/logos/teams/allemagne.png",
+    "status": "downloaded"
+  },
+  "Al Ahly": {
+    "slug": "al_ahly",
+    "local_path": "/logos/teams/al_ahly.png",
+    "status": "downloaded"
+  },
+  "Angleterre": {
+    "slug": "angleterre",
+    "local_path": "/logos/teams/angleterre.png",
+    "status": "downloaded"
+  },
+  "Angola": {
+    "slug": "angola",
+    "local_path": "/logos/teams/angola.png",
+    "status": "downloaded"
+  },
+  "Argentine": {
+    "slug": "argentine",
+    "local_path": "/logos/teams/argentine.png",
+    "status": "downloaded"
+  },
+  "Arsenal": {
+    "slug": "arsenal",
+    "local_path": "/logos/teams/arsenal.png",
+    "status": "downloaded"
+  },
+  "Asfa Yennenga": {
+    "slug": "asfa_yennenga",
+    "local_path": "/logos/teams/asfa_yennenga.png",
+    "status": "downloaded"
+  },
+  "As Douanes": {
+    "slug": "as_douanes",
+    "local_path": "/logos/teams/as_douanes.png",
+    "status": "downloaded"
+  },
+  "Atletico Madrid": {
+    "slug": "atletico_madrid",
+    "local_path": "/logos/teams/atletico_madrid.png",
+    "status": "downloaded"
+  },
+  "Australie": {
+    "slug": "australie",
+    "local_path": "/logos/teams/australie.png",
+    "status": "downloaded"
+  },
+  "Autriche": {
+    "slug": "autriche",
+    "local_path": "/logos/teams/autriche.png",
+    "status": "downloaded"
+  },
+  "Bayern Munich": {
+    "slug": "bayern_munich",
+    "local_path": "/logos/teams/bayern_munich.png",
+    "status": "downloaded"
+  },
+  "Belgique": {
+    "slug": "belgique",
+    "local_path": "/logos/teams/belgique.png",
+    "status": "downloaded"
+  },
+  "Benfica": {
+    "slug": "benfica",
+    "local_path": "/logos/teams/benfica.png",
+    "status": "downloaded"
+  },
+  "Borussia Dortmund": {
+    "slug": "borussia_dortmund",
+    "local_path": "/logos/teams/borussia_dortmund.png",
+    "status": "downloaded"
+  },
+  "Borussia Monchengladbach": {
+    "slug": "borussia_monchengladbach",
+    "local_path": "/logos/teams/borussia_monchengladbach.png",
+    "status": "downloaded"
+  },
+  "Bresil": {
+    "slug": "bresil",
+    "local_path": "/logos/teams/bresil.png",
+    "status": "downloaded"
+  },
+  "Burkina Faso": {
+    "slug": "burkina_faso",
+    "local_path": "/logos/teams/burkina_faso.png",
+    "status": "downloaded"
+  },
+  "Cameroun": {
+    "slug": "cameroun",
+    "local_path": "/logos/teams/cameroun.png",
+    "status": "downloaded"
+  },
+  "Cap Vert": {
+    "slug": "cap_vert",
+    "local_path": "/logos/teams/cap_vert.png",
+    "status": "downloaded"
+  },
+  "Celtic Fc": {
+    "slug": "celtic_fc",
+    "local_path": "/logos/teams/celtic_fc.png",
+    "status": "downloaded"
+  },
+  "Chelsea": {
+    "slug": "chelsea",
+    "local_path": "/logos/teams/chelsea.png",
+    "status": "downloaded"
+  },
+  "Club Africain": {
+    "slug": "club_africain",
+    "local_path": "/logos/teams/club_africain.png",
+    "status": "downloaded"
+  },
+  "Colombie": {
+    "slug": "colombie",
+    "local_path": "/logos/teams/colombie.png",
+    "status": "downloaded"
+  },
+  "Congo Dr": {
+    "slug": "congo_dr",
+    "local_path": "/logos/teams/congo_dr.png",
+    "status": "downloaded"
+  },
+  "Coree Du Sud": {
+    "slug": "coree_du_sud",
+    "local_path": "/logos/teams/coree_du_sud.png",
+    "status": "downloaded"
+  },
+  "Cote D Ivoire": {
+    "slug": "cote_d_ivoire",
+    "local_path": "/logos/teams/cote_d_ivoire.png",
+    "status": "downloaded"
+  },
+  "Croatie": {
+    "slug": "croatie",
+    "local_path": "/logos/teams/croatie.png",
+    "status": "downloaded"
+  },
+  "Danemark": {
+    "slug": "danemark",
+    "local_path": "/logos/teams/danemark.png",
+    "status": "downloaded"
+  },
+  "Ecosse": {
+    "slug": "ecosse",
+    "local_path": "/logos/teams/ecosse.png",
+    "status": "downloaded"
+  },
+  "Egypte": {
+    "slug": "egypte",
+    "local_path": "/logos/teams/egypte.png",
+    "status": "downloaded"
+  },
+  "Espagne": {
+    "slug": "espagne",
+    "local_path": "/logos/teams/espagne.png",
+    "status": "downloaded"
+  },
+  "Esperance Sportive": {
+    "slug": "esperance_sportive",
+    "local_path": "/logos/teams/esperance_sportive.png",
+    "status": "downloaded"
+  },
+  "Etats Unis": {
+    "slug": "etats_unis",
+    "local_path": "/logos/teams/etats_unis.png",
+    "status": "downloaded"
+  },
+  "Etoile Filante": {
+    "slug": "etoile_filante",
+    "local_path": "/logos/teams/etoile_filante.png",
+    "status": "downloaded"
+  },
+  "Fc Barcelona": {
+    "slug": "fc_barcelona",
+    "local_path": "/logos/teams/fc_barcelona.png",
+    "status": "downloaded"
+  },
+  "France": {
+    "slug": "france",
+    "local_path": "/logos/teams/france.png",
+    "status": "downloaded"
+  },
+  "Ghana": {
+    "slug": "ghana",
+    "local_path": "/logos/teams/ghana.png",
+    "status": "downloaded"
+  },
+  "Guinee": {
+    "slug": "guinee",
+    "local_path": "/logos/teams/guinee.png",
+    "status": "downloaded"
+  },
+  "Inter Milan": {
+    "slug": "inter_milan",
+    "local_path": "/logos/teams/inter_milan.png",
+    "status": "downloaded"
+  },
+  "Italie": {
+    "slug": "italie",
+    "local_path": "/logos/teams/italie.png",
+    "status": "downloaded"
+  },
+  "Japon": {
+    "slug": "japon",
+    "local_path": "/logos/teams/japon.png",
+    "status": "downloaded"
+  },
+  "Juventus": {
+    "slug": "juventus",
+    "local_path": "/logos/teams/juventus.png",
+    "status": "downloaded"
+  },
+  "Liverpool": {
+    "slug": "liverpool",
+    "local_path": "/logos/teams/liverpool.png",
+    "status": "downloaded"
+  },
+  "Mali": {
+    "slug": "mali",
+    "local_path": "/logos/teams/mali.png",
+    "status": "downloaded"
+  },
+  "Mamelodi Sundowns": {
+    "slug": "mamelodi_sundowns",
+    "local_path": "/logos/teams/mamelodi_sundowns.png",
+    "status": "downloaded"
+  },
+  "Manchester City": {
+    "slug": "manchester_city",
+    "local_path": "/logos/teams/manchester_city.png",
+    "status": "downloaded"
+  },
+  "Manchester United": {
+    "slug": "manchester_united",
+    "local_path": "/logos/teams/manchester_united.png",
+    "status": "downloaded"
+  },
+  "Maroc": {
+    "slug": "maroc",
+    "local_path": "/logos/teams/maroc.png",
+    "status": "downloaded"
+  },
+  "Mexique": {
+    "slug": "mexique",
+    "local_path": "/logos/teams/mexique.png",
+    "status": "downloaded"
+  },
+  "Monaco": {
+    "slug": "monaco",
+    "local_path": "/logos/teams/monaco.png",
+    "status": "downloaded"
+  },
+  "Mozambique": {
+    "slug": "mozambique",
+    "local_path": "/logos/teams/mozambique.png",
+    "status": "downloaded"
+  },
+  "Nigeria": {
+    "slug": "nigeria",
+    "local_path": "/logos/teams/nigeria.png",
+    "status": "downloaded"
+  },
+  "Olympique De Marseille": {
+    "slug": "olympique_de_marseille",
+    "local_path": "/logos/teams/olympique_de_marseille.png",
+    "status": "downloaded"
+  },
+  "Olympique Lyonnais": {
+    "slug": "olympique_lyonnais",
+    "local_path": "/logos/teams/olympique_lyonnais.png",
+    "status": "downloaded"
+  },
+  "Paris Saint-Germain": {
+    "slug": "paris_saint_germain",
+    "local_path": "/logos/teams/paris_saint_germain.png",
+    "status": "downloaded"
+  },
+  "Pays Bas": {
+    "slug": "pays_bas",
+    "local_path": "/logos/teams/pays_bas.png",
+    "status": "downloaded"
+  },
+  "Pologne": {
+    "slug": "pologne",
+    "local_path": "/logos/teams/pologne.png",
+    "status": "downloaded"
+  },
+  "Porto": {
+    "slug": "porto",
+    "local_path": "/logos/teams/porto.png",
+    "status": "downloaded"
+  },
+  "Portugal": {
+    "slug": "portugal",
+    "local_path": "/logos/teams/portugal.png",
+    "status": "downloaded"
+  },
+  "Psv Eindhoven": {
+    "slug": "psv_eindhoven",
+    "local_path": "/logos/teams/psv_eindhoven.png",
+    "status": "downloaded"
+  },
+  "Rail Club Du Kadiogo": {
+    "slug": "rail_club_du_kadiogo",
+    "local_path": "/logos/teams/rail_club_du_kadiogo.png",
+    "status": "downloaded"
+  },
+  "Rangers Fc": {
+    "slug": "rangers_fc",
+    "local_path": "/logos/teams/rangers_fc.png",
+    "status": "downloaded"
+  },
+  "Rb Leipzig": {
+    "slug": "rb_leipzig",
+    "local_path": "/logos/teams/rb_leipzig.png",
+    "status": "downloaded"
+  },
+  "Real Madrid": {
+    "slug": "real_madrid",
+    "local_path": "/logos/teams/real_madrid.png",
+    "status": "downloaded"
+  },
+  "Salitas Fc": {
+    "slug": "salitas_fc",
+    "local_path": "/logos/teams/salitas_fc.png",
+    "status": "downloaded"
+  },
+  "Saudi Arabie": {
+    "slug": "saudi_arabie",
+    "local_path": "/logos/teams/saudi_arabie.png",
+    "status": "downloaded"
+  },
+  "Senegal": {
+    "slug": "senegal",
+    "local_path": "/logos/teams/senegal.png",
+    "status": "downloaded"
+  },
+  "Serbie": {
+    "slug": "serbie",
+    "local_path": "/logos/teams/serbie.png",
+    "status": "downloaded"
+  },
+  "Ssc Napoli": {
+    "slug": "ssc_napoli",
+    "local_path": "/logos/teams/ssc_napoli.png",
+    "status": "downloaded"
+  },
+  "Suisse": {
+    "slug": "suisse",
+    "local_path": "/logos/teams/suisse.png",
+    "status": "downloaded"
+  },
+  "Tanzania": {
+    "slug": "tanzania",
+    "local_path": "/logos/teams/tanzania.png",
+    "status": "downloaded"
+  },
+  "Tottenham Hotspur": {
+    "slug": "tottenham_hotspur",
+    "local_path": "/logos/teams/tottenham_hotspur.png",
+    "status": "downloaded"
+  },
+  "Tp Mazembe": {
+    "slug": "tp_mazembe",
+    "local_path": "/logos/teams/tp_mazembe.png",
+    "status": "downloaded"
+  },
+  "Tunisie": {
+    "slug": "tunisie",
+    "local_path": "/logos/teams/tunisie.png",
+    "status": "downloaded"
+  },
+  "Turquie": {
+    "slug": "turquie",
+    "local_path": "/logos/teams/turquie.png",
+    "status": "downloaded"
+  },
+  "Uruguay": {
+    "slug": "uruguay",
+    "local_path": "/logos/teams/uruguay.png",
+    "status": "downloaded"
+  },
+  "Villarreal": {
+    "slug": "villarreal",
+    "local_path": "/logos/teams/villarreal.png",
+    "status": "downloaded"
+  },
+  "Wydad Ac": {
+    "slug": "wydad_ac",
+    "local_path": "/logos/teams/wydad_ac.png",
+    "status": "downloaded"
+  },
+  "Zamalek": {
+    "slug": "zamalek",
+    "local_path": "/logos/teams/zamalek.png",
+    "status": "downloaded"
+  },
+  "Zambie": {
+    "slug": "zambie",
+    "local_path": "/logos/teams/zambie.png",
+    "status": "downloaded"
+  },
+  "Zimbabwe": {
+    "slug": "zimbabwe",
+    "local_path": "/logos/teams/zimbabwe.png",
+    "status": "downloaded"
+  },
+  "Marseille": {
+    "slug": "marseille",
+    "local_path": "/logos/teams/marseille.png",
+    "status": "downloaded"
+  },
+  "River Plate": {
+    "slug": "river_plate",
+    "local_path": "/logos/teams/river_plate.png",
+    "status": "downloaded"
+  },
+  "Raja Casablanca": {
+    "slug": "raja_casablanca",
+    "local_path": "/logos/teams/raja_casablanca.png",
+    "status": "downloaded"
+  },
+  "Salitas FC": {
+    "slug": "salitas_fc",
+    "local_path": "/logos/teams/salitas_fc.png",
+    "status": "downloaded"
+  },
+  "AS Douanes": {
+    "slug": "as_douanes",
+    "local_path": "/logos/teams/as_douanes.png",
+    "status": "downloaded"
+  },
+  "Canada": {
+    "slug": "canada",
+    "local_path": "/logos/teams/canada.png",
+    "status": "pending"
+  },
+  "Bosnia & Herzegovina": {
+    "slug": "bosnie_herzegovine",
+    "local_path": "/logos/teams/bosnie_herzegovine.png",
+    "status": "pending"
+  },
+  "Haiti": {
+    "slug": "haiti",
+    "local_path": "/logos/teams/haiti.png",
+    "status": "pending"
+  },
+  "Qatar": {
+    "slug": "qatar",
+    "local_path": "/logos/teams/qatar.png",
+    "status": "pending"
+  },
+  "Czech Republic": {
+    "slug": "republique_tcheque",
+    "local_path": "/logos/teams/republique_tcheque.png",
+    "status": "pending"
+  }
+}

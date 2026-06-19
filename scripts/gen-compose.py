@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Generate docker-compose.yml for FasoBet (BLOC 1)."""
+"""DEPRECATED - DO NOT RUN.
+Generate docker-compose.yml for FasoBet (BLOC 1).
+
+⚠️  WARNING: This script generates a DIFFERENT docker-compose.yml than the
+one in the project root. Running it will OVERWRITE the working configuration.
+Port mappings differ (Django=8000, FastAPI=8001) from the actual setup
+(Django=8001, FastAPI=8000). Kept for historical reference only.
+"""
 
 YAML_CONTENT = r"""# --- FasoBet - Docker Compose (BLOC 1) ---
 # 6 services : postgres, redis, django, fastapi, nextjs, celery

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -9,13 +9,8 @@ import {
   TrendingUp,
   ShieldCheck,
   XCircle,
-  Bell,
-  Headphones,
-  BarChart3,
-  ScrollText,
-  Medal,
-  User,
 } from "lucide-react";
+import { BottomNavBar } from "@/components/ui/BottomNavBar";
 
 // ─── Feature rows ─────────────────────────────────────────
 const FEATURES = [
@@ -47,8 +42,34 @@ const FEATURES = [
   },
 ];
 
+interface Plan {
+  id: string;
+  name: string;
+  price_fcfa: number;
+  predictions_per_week: number;
+}
+
 export default function PremiumPage() {
   const router = useRouter();
+  const [plans, setPlans] = useState<Plan[] | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    fetch(`${process.env.NEXT_PUBLIC_DJANGO_URL}/api/subscriptions/plans/`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setPlans(data))
+      .catch(() => setPlans(null));
+  }, []);
+
+  const resolved = (plans && plans.length > 0) ? plans : [
+    { id: "free",    name: "Gratuit",  price_fcfa: 0,     predictions_per_week: 1 },
+    { id: "premium", name: "Premium",  price_fcfa: 2000,  predictions_per_week: 999 },
+  ];
+
+  const premium = resolved.find(p => p.id === "premium") ?? resolved[1] ?? resolved[0];
+  // Fallback to price if price_fcfa is undefined in the API response
+  const premiumPrice = premium?.price_fcfa ?? (premium as any)?.price ?? 2000;
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-deep text-on-surface font-body-md">
@@ -66,12 +87,12 @@ export default function PremiumPage() {
           </h1>
         </button>
         <span className="font-headline-lg text-headline-lg font-bold text-ia-gold tracking-tight">
-          FASOBET
+          fasobet by ben rachid sawadogo
         </span>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 mt-14 mb-[72px] overflow-y-auto px-margin-mobile py-stack-lg space-y-stack-lg">
+      <main className="flex-1 mt-14 mb-[72px] overflow-y-auto px-margin-mobile py-stack-lg space-y-4">
         {/* Value Proposition Hero */}
         <section className="relative h-48 rounded-lg overflow-hidden flex items-end p-stack-md border border-outline-variant">
           <div className="absolute inset-0 bg-gradient-to-t from-surface-deep via-surface-deep/60 to-transparent" />
@@ -100,9 +121,16 @@ export default function PremiumPage() {
             </h3>
           </div>
           <div className="flex items-baseline gap-1">
-            <span className="text-[42px] font-stat-value text-ia-gold">5,000</span>
+            <span className="text-[42px] font-stat-value text-ia-gold">
+              {(() => {
+                const price = premium?.price_fcfa ?? (premium as any)?.price;
+                if (price === 0 || price === undefined || price === null) return "Gratuit";
+                // Rendu statique côté serveur, formatage côté client
+                return isClient ? Number(price).toLocaleString('fr-FR') : price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+              })()}
+            </span>
             <span className="font-label-caps text-label-caps text-on-surface-variant">
-              FCFA / MOIS
+              {premiumPrice === 0 ? "" : "FCFA / MOIS"}
             </span>
           </div>
           <p className="text-on-surface-variant font-body-md max-w-[280px]">
@@ -171,43 +199,14 @@ export default function PremiumPage() {
         {/* Footer Note */}
         <footer className="text-center pb-stack-lg">
           <p className="text-outline text-xs leading-relaxed max-w-xs mx-auto">
-            FasoBet utilise des modèles mathématiques avancés. Jouez de manière responsable.
+            fasobet by ben rachid sawadogo utilise des modèles mathématiques avancés. Jouez de manière responsable.
             L'abonnement est sans engagement et peut être annulé à tout moment.
           </p>
         </footer>
       </main>
 
       {/* BottomNavBar */}
-      <nav className="fixed bottom-0 w-full z-50 bg-surface-deep border-t border-outline-variant flex justify-around items-center h-[72px] px-base">
-        <Link
-          href="/dashboard"
-          className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <BarChart3 className="w-6 h-6" />
-          <span className="font-label-caps text-[10px] uppercase">ANALYSES</span>
-        </Link>
-        <Link
-          href="#"
-          className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <ScrollText className="w-6 h-6" />
-          <span className="font-label-caps text-[10px] uppercase">COUPON</span>
-        </Link>
-        <Link
-          href="/premium"
-          className="flex flex-col items-center justify-center text-ia-gold gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <Medal className="w-6 h-6" />
-          <span className="font-label-caps text-[10px] uppercase">PRÉMIUM</span>
-        </Link>
-        <Link
-          href="/profile"
-          className="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-on-surface transition-colors active:opacity-80"
-        >
-          <User className="w-6 h-6" />
-          <span className="font-label-caps text-[10px] uppercase">COMPTE</span>
-        </Link>
-      </nav>
+      <BottomNavBar />
     </div>
   );
 }
