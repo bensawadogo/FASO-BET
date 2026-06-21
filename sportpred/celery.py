@@ -32,6 +32,11 @@ app.conf.beat_schedule = {
         'schedule': 300.0,  # toutes les 5 min — se reprogramme dynamiquement si matchs live
         'options': {'expires': 240},
     },
+    'sync-wc-scores-hourly': {
+        'task': 'api.tasks_live.sync_wc2026_scores_task',
+        'schedule': 3600.0,  # toutes les heures
+        'options': {'expires': 3000},
+    },
 }
 
 @app.task(bind=True, ignore_result=True)

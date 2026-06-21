@@ -153,17 +153,18 @@ def predictions_worldcup2026(request):
         return Response(cached_data)
 
     import joblib, glob
+    def load_latest(prefix):
+        files = sorted(glob.glob(f"ml/models/{prefix}_international_*.joblib"))
+        return files[-1] if files else None
     try:
-        xgb_files = sorted(glob.glob("ml/models/xgb_international_*.joblib"))
-        lgbm_files = sorted(glob.glob("ml/models/lgbm_international_*.joblib"))
-        le_files = sorted(glob.glob("ml/models/le_international_*.joblib"))
-        
-        if not xgb_files:
+        xgb_path = load_latest("xgb") or load_latest("xgb")
+        lgbm_path = load_latest("lgbm")
+        le_path = load_latest("le")
+        if not xgb_path or not lgbm_path or not le_path:
             return Response({"error": "WC Model not ready"}, status=503)
-            
-        xgb_model = joblib.load(xgb_files[-1])
-        lgbm_model = joblib.load(lgbm_files[-1])
-        le = joblib.load(le_files[-1])
+        xgb_model = joblib.load(xgb_path)
+        lgbm_model = joblib.load(lgbm_path)
+        le = joblib.load(le_path)
     except Exception as e:
         return Response({"error": f"Failed to load model: {str(e)}"}, status=500)
 
@@ -264,22 +265,34 @@ def predictions_worldcup2026(request):
         except Exception:
             continue
 
+    # Real accuracy from finished matches
+    from django.db.models import F as dbF
+    wc_finished = InternationalMatch.objects.filter(
+        status="finished",
+        actual_result__isnull=False,
+        predicted_outcome__isnull=False,
+    )
+    wc_total = wc_finished.count()
+    wc_correct = wc_finished.filter(actual_result=dbF("predicted_outcome")).count()
+    real_accuracy = round(wc_correct / wc_total * 100, 1) if wc_total > 0 else 52.44
+
     data = {
         "tournament": "FIFA World Cup 2026",
         "generated_at": timezone.now().isoformat(),
-        "model_accuracy": 52.44,
+        "model_accuracy": real_accuracy,
+        "model_accuracy_source": "real" if wc_total > 0 else "baseline",
         "equipes_africaines": len(AFRICAN_TEAMS),
         "matchs": results
     }
     
-    cache.set(cache_key, data, 21600) # 6 hours
+    cache.set(cache_key, data, 600) # 10 min
     return Response(data)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def public_stats(request):
-    """Enhanced public stats with real ROI calculation and calibration status"""
-    from django.db import close_old_connections
+    """Enhanced public stats with real accuracy from WC 2026 finished matches"""
+    from django.db import close_old_connections, models as db_models
     close_old_connections()
     cache_key = "public_stats_data"
     try:
@@ -297,62 +310,50 @@ def public_stats(request):
     correct_preds = 0
     acc_30j = None
 
-    try:
-        total_preds = PredictionResult.objects.count()
-        correct_preds = PredictionResult.objects.filter(actual_result=F('predicted_outcome')).count()
-        preds_30j = PredictionResult.objects.filter(created_at__gte=now - timedelta(days=30))
-        if preds_30j.count() >= 10:
-            acc_30j = round(preds_30j.filter(actual_result=F('predicted_outcome')).count() / preds_30j.count() * 100, 1)
-        if total_preds >= 50:
-            value_bets = PredictionResult.objects.filter(value_bet=True).exclude(actual_result__isnull=True).exclude(actual_result='')
-            mises = value_bets.count()
-            if mises > 0:
-                gains = 0
-                for vb in value_bets:
-                    if vb.actual_result == vb.predicted_outcome:
-                        match_odds = 2.0
-                        if vb.linked_match:
-                            if vb.predicted_outcome == 'HOME': match_odds = vb.linked_match.odds_home or 2.0
-                            elif vb.predicted_outcome == 'DRAW': match_odds = vb.linked_match.odds_draw or 2.0
-                            elif vb.predicted_outcome == 'AWAY': match_odds = vb.linked_match.odds_away or 2.0
-                        gains += match_odds
-                roi = round(((gains - mises) / mises) * 100, 2)
-                roi_message = f"ROI basé sur {mises} value bets"
-                status_label = "healthy"
-            else:
-                roi = 0.0
-                roi_message = "Aucun value bet vérifié"
-                status_label = "healthy"
-        else:
-            roi_message = f"Données insuffisantes ({total_preds} prédictions)"
-    except Exception:
-        close_old_connections()
-
-    upcoming = InternationalMatch.objects.filter(
+    # Real accuracy from WC 2026 finished matches
+    wc_finished = InternationalMatch.objects.filter(
+        status="finished",
+        actual_result__isnull=False,
+        predicted_outcome__isnull=False,
+    )
+    wc_total = wc_finished.count()
+    wc_correct = wc_finished.filter(actual_result=db_models.F("predicted_outcome")).count()
+    wc_total_predicted = InternationalMatch.objects.filter(
+        predicted_outcome__isnull=False,
+        match_date__gte=now.date(),
+    ).count()
+    wc_upcoming = InternationalMatch.objects.filter(
         match_date__gte=now.date()
     ).count()
 
+    if wc_total > 0:
+        wc_accuracy = round(wc_correct / wc_total * 100, 1)
+        status_label = "healthy"
+    else:
+        wc_accuracy = 53.87
+
     data = {
         "accuracy_30j": acc_30j,
-        "accuracy_90j": None if total_preds < 100 else 53.8,
-        "total_predictions": total_preds,
-        "predictions_correctes": correct_preds,
-        "meilleure_ligue": "Premier League" if total_preds > 50 else None,
+        "accuracy_90j": None,
+        "total_predictions": wc_total,
+        "predictions_correctes": wc_correct,
+        "meilleure_ligue": "FIFA World Cup 2026",
         "roi_value_bets": roi,
         "roi_message": roi_message,
         "derniere_mise_a_jour": now.date().isoformat(),
         "statut": status_label,
-        "total_predicted": total_preds,
-        "correct": correct_preds,
-        "wrong": total_preds - correct_preds,
-        "accuracy_pct": round((correct_preds / total_preds * 100), 1) if total_preds > 0 else 53.87,
-        "accuracy_display": f"{round((correct_preds / total_preds * 100), 1) if total_preds > 0 else 53.87}%",
-        "upcoming_matches": upcoming,
+        "total_predicted": wc_total + wc_total_predicted,
+        "correct": wc_correct,
+        "wrong": wc_total - wc_correct,
+        "accuracy_pct": wc_accuracy,
+        "accuracy_display": f"{wc_accuracy}%",
+        "upcoming_matches": wc_upcoming,
         "model_version": "XGBoost + LightGBM + xG StatsBomb",
         "baseline_market": 53.87,
+        "data_source": "real" if wc_total > 0 else "baseline",
     }
     try:
-        cache.set(cache_key, data, 3600)
+        cache.set(cache_key, data, 600)
     except Exception:
         pass
     return Response(data)

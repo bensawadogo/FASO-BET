@@ -141,3 +141,31 @@ def compute_top_scores(lambda_home: float, lambda_away: float,
             scores.append({"score": f"{h}-{a}", "probability": round(p, 4)})
     scores.sort(key=lambda x: x["probability"], reverse=True)
     return scores[:top_n]
+
+
+def compute_match_lambdas(elo_home, elo_away, xg_home=0.0, xg_away=0.0,
+                           form_home=0.5, form_away=0.5,
+                           goals_for_home=None, goals_ag_home=None,
+                           goals_for_away=None, goals_ag_away=None):
+    """Calcule lambda_home et lambda_away avec priorite:
+    1. xG reel (StatsBomb)
+    2. fallback: form_factor + ELO (form_home+form_away module base_total)
+    """
+    avg_elo = (float(elo_home) + float(elo_away)) / 2.0
+    base_total = 2.6 * (avg_elo / 1500.0)
+
+    if xg_home and xg_home > 0 and xg_away and xg_away > 0:
+        expected_total = float(xg_home) + float(xg_away)
+    else:
+        ff = float(form_home) + float(form_away)
+        ff = max(0.5, min(ff, 2.0))
+        expected_total = base_total * ff
+
+    elo_diff = float(elo_home) - float(elo_away)
+    home_strength = 10 ** (elo_diff / 400.0)
+    total_ratio = home_strength + 1
+    lambda_home = expected_total * home_strength / total_ratio
+    lambda_away = expected_total * 1 / total_ratio
+    lambda_home = max(0.3, min(lambda_home, 5.0))
+    lambda_away = max(0.3, min(lambda_away, 5.0))
+    return lambda_home, lambda_away

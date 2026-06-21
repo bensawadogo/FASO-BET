@@ -316,6 +316,12 @@ class InternationalMatch(models.Model):
     current_minute = models.IntegerField(null=True)
     last_live_update = models.DateTimeField(null=True)
 
+    # Accuracy tracking
+    actual_result = models.CharField(max_length=10, null=True, blank=True,
+        help_text="Reel: HOME/AWAY/DRAW")
+    predicted_outcome = models.CharField(max_length=10, null=True, blank=True,
+        help_text="Prediction du modele: HOME/AWAY/DRAW")
+
     class Meta:
         unique_together = [['home_team', 'away_team', 'match_date', 'tournament']]
         indexes = [
@@ -339,6 +345,10 @@ class InternationalFeatures(models.Model):
     label = models.CharField(max_length=4, null=True)
     xg_home = models.FloatField(null=True)
     xg_away = models.FloatField(null=True)
+    goals_for_home = models.FloatField(null=True, help_text="Moyenne ponderee buts marques (home team)")
+    goals_ag_home = models.FloatField(null=True, help_text="Moyenne ponderee buts encaisses (home team)")
+    goals_for_away = models.FloatField(null=True, help_text="Moyenne ponderee buts marques (away team)")
+    goals_ag_away = models.FloatField(null=True, help_text="Moyenne ponderee buts encaisses (away team)")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

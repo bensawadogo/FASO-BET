@@ -230,3 +230,17 @@ def refresh_live_odds_and_scores(self):
         "live_matches_refreshed": nb_live,
         "next_interval_seconds": interval,
     }
+
+
+@app.task(bind=True, ignore_result=True)
+def sync_wc2026_scores_task(self):
+    """Sync actual scores from openfootball into InternationalMatch every hour"""
+    import subprocess
+    result = subprocess.run(
+        ["python", "scripts/sync_wc2026_scores.py"],
+        capture_output=True, text=True, cwd="/app",
+    )
+    logger.info("sync_wc2026_scores output:\n%s", result.stdout)
+    if result.returncode != 0:
+        logger.error("sync_wc2026_scores error:\n%s", result.stderr)
+    return result.stdout
