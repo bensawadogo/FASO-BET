@@ -112,12 +112,37 @@ class AgentCollector:
                  message="Aucun match disponible pour cette période"
              )
 
+        # Récupérer les vraies cotes depuis TheOddsAPI
+        odds_lookup: dict = {}
+        league_names = list({f.get("competition", "") or f.get("league", {}).get("name", "") for f in all_fixtures})
+        for comp_name in league_names:
+            sport_key = sport_key_for_league(comp_name)
+            if sport_key:
+                try:
+                    odds_events = await self._fetch_odds(sport_key)
+                    for ev in odds_events:
+                        home = ev.get("home_team", "")
+                        away = ev.get("away_team", "")
+                        bookmakers = ev.get("bookmakers", [])
+                        if bookmakers:
+                            outcomes = bookmakers[0]["markets"][0]["outcomes"]
+                            odds_map = {o["name"]: o["price"] for o in outcomes}
+                            odds_lookup[(home.lower(), away.lower())] = {
+                                "home_win": odds_map.get(home, DEFAULT_HOME_WIN),
+                                "draw": odds_map.get("Draw", DEFAULT_DRAW),
+                                "away_win": odds_map.get(away, DEFAULT_AWAY_WIN),
+                            }
+                    if odds_events:
+                        logger.info(f"[Agent1] {len(odds_events)} cotes récupérées pour {comp_name} ({sport_key})")
+                except Exception as e:
+                    logger.warning(f"[Agent1] Erreur récupération cotes pour {comp_name}: {e}")
+
         verified: list[VerifiedMatch] = []
         rejected: list[RejectedMatch] = []
 
         for fixture in all_fixtures[:MAX_FIXTURES_PER_LEAGUE]:
-            # Assurez-vous que odds_events est passé même si vide
-            result = self._fixture_to_match(fixture, [])
+            # Passer odds_lookup pour chercher les vraies cotes
+            result = self._fixture_to_match(fixture, odds_lookup)
             if result.get("reject"):
                 rejected.append(result["reject"])
             elif result.get("match"):
@@ -158,6 +183,9 @@ class AgentCollector:
                 "competition": match.competition,
                 "kickoff_utc": match.date,
                 "status": "upcoming",
+                "odds_home": match.odds.home_win if match.odds else None,
+                "odds_draw": match.odds.draw if match.odds else None,
+                "odds_away": match.odds.away_win if match.odds else None,
             }
             # save_match retourne maintenant l'ID entier du match en BDD
             db_match_id = await asyncio.to_thread(save_match, payload)
@@ -194,7 +222,7 @@ class AgentCollector:
             )
             return response.json() if response.status_code == 200 else []
 
-    def _fixture_to_match(self, fixture: dict, odds_events: list[dict]) -> dict:
+    def _fixture_to_match(self, fixture: dict, odds_lookup: dict) -> dict:
         home = (
             fixture.get("home_team")
             or fixture.get("teams", {}).get("home", {}).get("name", "")
@@ -223,6 +251,23 @@ class AgentCollector:
             match_id_val = f"{home}-{away}-{kickoff}" # Generate a unique ID if none is found
         match_id = f"match_{match_id_val}"
 
+        # Chercher les vraies cotes dans odds_lookup
+        real_odds = odds_lookup.get((home.lower(), away.lower()))
+        if real_odds:
+            match_odds = MatchOdds(
+                home_win=real_odds["home_win"],
+                draw=real_odds["draw"],
+                away_win=real_odds["away_win"],
+                over_2_5=DEFAULT_OVER_2_5,
+                btts=DEFAULT_BTTS,
+            )
+            odds_source = "TheOddsAPI"
+            odds_movement = detect_odds_movement(real_odds["home_win"])
+        else:
+            match_odds = default_odds()
+            odds_source = "Estimation"
+            odds_movement = OddsMovement.STABLE
+
         match = VerifiedMatch(
             id=match_id,
             home=home,
@@ -232,9 +277,9 @@ class AgentCollector:
             competition=competition,
             date=kickoff,
             match_type=MatchType.CLUB_OFFICIAL,
-            odds=default_odds(),
-            odds_source="Estimation",
-            odds_movement=OddsMovement.STABLE,
+            odds=match_odds,
+            odds_source=odds_source,
+            odds_movement=odds_movement,
         )
         return {"match": match, "reject": None}
 

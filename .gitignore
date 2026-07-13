@@ -64,6 +64,7 @@ redis_data/
 
 # Temporary
 *.tmp
+tmp_*
 tmp_pipeline_payload.json
 *.bak
 *.backup

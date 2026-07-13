@@ -18,7 +18,7 @@ from typing import Optional
 
 from api.lib.llm_json import parse_llm_json_payload
 from api.lib.leagues import LEAGUES, get_league_avg_goals
-from api.lib.poisson import compute_lambdas, prob_1x2, prob_btts, prob_over_25
+from api.lib.poisson import compute_lambdas, prob_1x2, prob_btts, prob_over_25, implied_lambdas_from_odds
 from api.models import (
     Agent2Output,
     CompositeScore,
@@ -158,11 +158,19 @@ async def analyze_match_deterministic(match: VerifiedMatch) -> MatchStatistics:
 
     # Poisson calculation in executor
     loop = asyncio.get_event_loop()
-    lambda_home, lambda_away = await loop.run_in_executor(None, compute_lambdas,
-        home_xg["att"], home_xg["def"],
-        away_xg["att"], away_xg["def"],
-        league_avg,
-    )
+
+    if home_stats is None and away_stats is None and match.odds is not None:
+        # API indisponible → utiliser les cotes pour dériver les lambdas
+        lambda_home, lambda_away = await loop.run_in_executor(None,
+            implied_lambdas_from_odds,
+            match.odds.home_win, match.odds.draw, match.odds.away_win,
+        )
+    else:
+        lambda_home, lambda_away = await loop.run_in_executor(None, compute_lambdas,
+            home_xg["att"], home_xg["def"],
+            away_xg["att"], away_xg["def"],
+            league_avg,
+        )
 
     form_home = form_to_score(home_stats.get("form") if home_stats else None)
     form_away = form_to_score(away_stats.get("form") if away_stats else None)

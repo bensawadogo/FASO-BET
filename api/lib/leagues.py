@@ -31,9 +31,14 @@ def sport_key_for_league(league_name: str) -> Optional[str]:
         "Ligue 2": "soccer_france_ligue_two",
         "Primeira Liga": "soccer_portugal_primeira_liga",
         "Eredivisie": "soccer_netherlands_eredivisie",
-        "FIFA World Cup": "soccer_world_cup",
+        "FIFA World Cup": "soccer_fifa_world_cup",
+        "FIFA World Cup 2026": "soccer_fifa_world_cup",
     }
-    return mapping.get(league_name)
+    # Try prefix match if exact not found
+    for name, key in mapping.items():
+        if name.lower() in league_name.lower() or league_name.lower() in name.lower():
+            return key
+    return None
 
 def get_league_avg_goals(league_id: int) -> float:
     # Valeurs par défaut pour les ligues configurées

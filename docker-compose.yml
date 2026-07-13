@@ -237,6 +237,33 @@ services:
         reservations:
           memory: 512M
 
+  ai-gateway:
+    build:
+      context: ./ai-gateway
+      dockerfile: Dockerfile
+    image: fasobet-ai-gateway:latest
+    container_name: fasobet-ai-gateway
+    restart: on-failure:3
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.docker
+    environment:
+      <<: *default-env
+      DATABASE_URL: postgresql://fasobet:changeme_prod@postgres:5432/fasobet
+    ports:
+      - "8100:8100"
+    logging: *default-logging
+    networks:
+      - fasobet-net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
 networks:
   fasobet-net:
     name: fasobet-network

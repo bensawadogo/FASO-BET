@@ -1095,6 +1095,7 @@ def save_prediction_internal(request):
 @permission_classes([AllowAny])
 def list_predictions(request):
     """List predictions with limit and odds from match table"""
+    import json
     limit = int(request.GET.get('limit', 20))
     limit = min(limit, 100)  # cap de sécurité
     competition = request.GET.get("competition", None)
@@ -1103,10 +1104,7 @@ def list_predictions(request):
         qs = qs.filter(competition__icontains=competition)
     qs = qs.order_by('-created_at')[:limit]
     data = PredictionResultSerializer(qs, many=True).data
-    # Enrich with odds from predictions_match
-    # Filter out SEED_DEMO if it's stored in sources_used
-    # data = [item for item in data if not (isinstance(item.get('sources_used'), str) and 'SEED_DEMO' in item['sources_used']) and not (isinstance(item.get('sources_used'), list) and 'SEED_DEMO' in item['sources_used'])]
-    
+
     match_ids = [item['match_id'] for item in data if item.get('match_id') and item['match_id'].isdigit()]
     if match_ids:
         from django.db import connection
@@ -1123,6 +1121,23 @@ def list_predictions(request):
                 item['odds_home'] = o.get('odds_home')
                 item['odds_draw'] = o.get('odds_draw')
                 item['odds_away'] = o.get('odds_away')
+
+    # Extract probabilities, markets, extended_markets from key_factors
+    for item in data:
+        kf = item.get('key_factors')
+        if kf and isinstance(kf, str):
+            try:
+                kf = json.loads(kf)
+            except (json.JSONDecodeError, TypeError):
+                kf = {}
+        elif not kf:
+            kf = {}
+        item['probabilities'] = kf.get('probabilities', {})
+        item['markets'] = kf.get('markets', {})
+        item['extended_markets'] = kf.get('extended_markets', {})
+        item['signal'] = item.get('signal') or kf.get('signal', 'neutral')
+        item['consensus_pct'] = item.get('consensus_pct') or kf.get('consensus_pct', 0)
+
     return Response(data)
 
 @api_view(['GET'])

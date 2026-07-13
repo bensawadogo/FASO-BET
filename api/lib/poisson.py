@@ -143,6 +143,40 @@ def compute_top_scores(lambda_home: float, lambda_away: float,
     return scores[:top_n]
 
 
+def implied_lambdas_from_odds(odds_home: float, odds_draw: float, odds_away: float) -> tuple[float, float]:
+    """Trouve (lambda_home, lambda_away) à partir des cotes 1X2.
+
+    Convertit les cotes en probabilités équitables (sans marge),
+    puis cherche par grille les λ qui minimisent l'écart avec les
+    probabilités 1X2 calculées par Poisson.
+
+    Returns:
+        Tuple (lambda_home, lambda_away)
+    """
+    if odds_home <= 0 or odds_draw <= 0 or odds_away <= 0:
+        return (1.0, 1.0)
+
+    implied = 1.0 / odds_home + 1.0 / odds_draw + 1.0 / odds_away
+    fair_home = (1.0 / odds_home) / implied
+    fair_draw = (1.0 / odds_draw) / implied
+    fair_away = (1.0 / odds_away) / implied
+
+    best = (1.0, 1.0)
+    best_err = float("inf")
+
+    for i in range(5, 51):
+        lh = i * 0.1
+        for j in range(5, 51):
+            la = j * 0.1
+            p = prob_1x2(lh, la)
+            err = (p["home"] - fair_home) ** 2 + (p["draw"] - fair_draw) ** 2 + (p["away"] - fair_away) ** 2
+            if err < best_err:
+                best_err = err
+                best = (round(lh, 2), round(la, 2))
+
+    return best
+
+
 def compute_match_lambdas(elo_home, elo_away, xg_home=0.0, xg_away=0.0,
                            form_home=0.5, form_away=0.5,
                            goals_for_home=None, goals_ag_home=None,

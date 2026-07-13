@@ -39,7 +39,7 @@ export function AmbientSurface({ className = '', ...props }: AmbientSurfaceProps
     const colors: number[] = [];
     const geometry = new THREE.BufferGeometry();
 
-    const R = 255 / 255, G = 255 / 255, B = 255 / 255;
+    const R = 52 / 255, G = 211 / 255, B = 153 / 255;
 
     for (let ix = 0; ix < AMOUNTX; ix++) {
       for (let iy = 0; iy < AMOUNTY; iy++) {

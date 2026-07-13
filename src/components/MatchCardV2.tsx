@@ -289,7 +289,7 @@ export function MatchCard({
                 {homeTeam.name?.split(' ')[0]} ou Nul
               </span>
               <span style={{fontSize:'12px',fontWeight:600,color:'#fff'}}>
-                {mk?.double_chance_1x ? Math.round(mk.double_chance_1x * 100) : 0}%
+                {em?.double_chance?.["1X"] ? Math.round(em.double_chance["1X"] * 100) : 0}%
               </span>
             </div>
             <div style={{display:'flex',justifyContent:'space-between'}}>

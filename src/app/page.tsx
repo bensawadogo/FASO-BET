@@ -70,13 +70,15 @@ export default function HomePage() {
           competition: p.competition || p.league || "Ligue",
           signal: p.signal || "neutral",
           confidence: p.confidence || p.confidence_score || 0.75,
-          match_date: p.match_date || "2026-06-14",
+          match_date: p.match_date || (p.kickoff_utc || "").slice(0, 10) || "2026-07-15",
         };
       });
       // Filter out finished matches (more than 2 hours past kickoff)
       const now = new Date()
       const filtered = mapped.filter(m => {
-        const matchDate = new Date(m.match_date + (m.kickoff_utc?.includes('T') ? '' : 'T23:59:00Z'))
+        const kickoffStr = m.kickoff_utc || m.match_date || "";
+        const fallbackDate = kickoffStr.includes('T') ? kickoffStr : (kickoffStr ? kickoffStr + 'T23:59:00Z' : '');
+        const matchDate = new Date(fallbackDate || '2026-07-15T00:00:00Z');
         const endTime = new Date(matchDate.getTime() + 2 * 60 * 60 * 1000)
         return endTime > now
       })
@@ -92,34 +94,34 @@ export default function HomePage() {
   const runPipeline = useCallback(async () => {
     if (step === "loading") return;
     setStep("loading");
-    setErrorMessage("📊 Analyse en cours... résultats dans quelques secondes");
+    setErrorMessage("📊 Analyse en cours...");
 
     try {
-      setErrorMessage("📊 Analyse en cours...");
+      const pipelineRes = await fetch('/api/fastapi/proxy/pipeline/run', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!pipelineRes.ok) {
+        const errBody = await pipelineRes.json().catch(() => ({}));
+        throw new Error(errBody.error || `Pipeline error (${pipelineRes.status})`);
+      }
 
-      await Promise.allSettled([
-        fetch('/api/cache/clear', { method: 'POST' }).catch(() => {}),
-        fetch('/api/fastapi/proxy/pipeline/run', {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        }).catch(() => {}),
-      ]);
-
-      await new Promise(r => setTimeout(r, 2000));
       await fetch('/api/cache/clear', { method: 'POST' }).catch(() => {});
-      const result = await fetchPredictions();
 
+      const result = await fetchPredictions();
       if (!result || result.length === 0) {
         throw new Error("Aucune prédiction disponible — backends injoignables");
       }
 
       setStep("done");
-      setErrorMessage("✅ Analyse terminée ! Nouvelles prédictions disponibles.");
+      setErrorMessage("✅ Analyse terminée !");
       setTimeout(() => setErrorMessage(undefined), 5000);
     } catch (err: any) {
       console.error("DEBUG: Error in runPipeline:", err);
       setStep("done");
+      setErrorMessage(`❌ ${err.message}`);
+      setTimeout(() => setErrorMessage(undefined), 8000);
     }
   }, [step, fetchPredictions]);
 
@@ -128,6 +130,10 @@ export default function HomePage() {
       if (res) setPerf({ roi: res.roi || 0, win_rate: res.win_rate || 0 });
     });
   }, []);
+
+  useEffect(() => {
+    fetchPredictions();
+  }, [fetchPredictions]);
 
   const filtered = useMemo(() => {
     return predictions.filter((p: any) => {
@@ -152,7 +158,7 @@ export default function HomePage() {
     const secondaryMarkets: { label: string; lines: { outcomeLabel: string; probability: number; hasValueBet?: boolean }[] }[] = [];
     if (mk.btts_yes != null) secondaryMarkets.push({ label: "BTTS", lines: [{ outcomeLabel: "Oui", probability: Math.round(mk.btts_yes * 100) }, { outcomeLabel: "Non", probability: Math.round((1 - mk.btts_yes) * 100) }] });
     if (mk.over_2_5 != null) secondaryMarkets.push({ label: "O/U 2.5", lines: [{ outcomeLabel: "Over", probability: Math.round(mk.over_2_5 * 100) }, { outcomeLabel: "Under", probability: Math.round((1 - mk.over_2_5) * 100) }] });
-    if (mk.double_chance_1x != null) secondaryMarkets.push({ label: "Double Chance", lines: [{ outcomeLabel: "1X", probability: Math.round(mk.double_chance_1x * 100), hasValueBet: mk.double_chance_1x >= 0.6 }, { outcomeLabel: "X2", probability: Math.round((em.double_chance?.X2 || 0) * 100) }] });
+    if (em.double_chance?.["1X"] != null) secondaryMarkets.push({ label: "Double Chance", lines: [{ outcomeLabel: "1X", probability: Math.round(em.double_chance["1X"] * 100), hasValueBet: em.double_chance["1X"] >= 0.6 }, { outcomeLabel: "X2", probability: Math.round((em.double_chance?.X2 || 0) * 100) }] });
     if (em.over_under_1_5?.over != null) secondaryMarkets.push({ label: "O/U 1.5", lines: [{ outcomeLabel: "Over", probability: Math.round(em.over_under_1_5.over * 100) }, { outcomeLabel: "Under", probability: Math.round(em.over_under_1_5.under * 100) }] });
     if (em.draw_no_bet?.home != null) secondaryMarkets.push({ label: "Draw No Bet", lines: [{ outcomeLabel: "DNB1", probability: Math.round(em.draw_no_bet.home * 100) }, { outcomeLabel: "DNB2", probability: Math.round(em.draw_no_bet.away * 100) }] });
     if (em.over_under_3_5?.over != null) secondaryMarkets.push({ label: "O/U 3.5", lines: [{ outcomeLabel: "Over", probability: Math.round(em.over_under_3_5.over * 100) }, { outcomeLabel: "Under", probability: Math.round(em.over_under_3_5.under * 100) }] });

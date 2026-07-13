@@ -18,18 +18,22 @@ def save_match(match_data: dict) -> int: # Ajout du type de retour
     cur = conn.cursor()
     query = _prepare_query("""
         INSERT INTO predictions_match 
-        (external_id, home_team, away_team, home_logo, away_logo, competition, kickoff_utc, status, created_at, updated_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        (external_id, home_team, away_team, home_logo, away_logo, competition, kickoff_utc, status, odds_home, odds_draw, odds_away, created_at, updated_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ON CONFLICT (external_id) DO UPDATE SET
             home_logo = EXCLUDED.home_logo,
             away_logo = EXCLUDED.away_logo,
             status = EXCLUDED.status,
+            odds_home = EXCLUDED.odds_home,
+            odds_draw = EXCLUDED.odds_draw,
+            odds_away = EXCLUDED.odds_away,
             updated_at = CURRENT_TIMESTAMP
         RETURNING id; -- Retourne l'ID du match
     """)
     cur.execute(query, (match_data['external_id'], match_data['home_team'], match_data['away_team'], 
           match_data.get('home_logo', ''), match_data.get('away_logo', ''),
-          match_data['competition'], match_data['kickoff_utc'], match_data['status']))
+          match_data['competition'], match_data['kickoff_utc'], match_data['status'],
+          match_data.get('odds_home'), match_data.get('odds_draw'), match_data.get('odds_away')))
     match_id = cur.fetchone()[0] # Récupère l'ID
     conn.commit()
     cur.close()

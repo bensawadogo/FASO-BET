@@ -114,11 +114,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
-                var SW_VERSION = Date.now();
-                navigator.serviceWorker.register('/sw.js?v=' + SW_VERSION, { updateViaCache: 'none' });
-                navigator.serviceWorker.addEventListener('controllerchange', function () {
-                  window.location.reload();
-                });
+                navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
               }
             `,
           }}
